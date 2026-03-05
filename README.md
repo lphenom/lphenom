@@ -1,16 +1,98 @@
-## Hi there 👋
+# ⚡ LPhenom — PHP framework for shared hosting and KPHP compilation
 
-<!--
-**lphenom/lphenom** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+🚀 **LPhenom** — PHP-фреймворк нового поколения, который позволяет **одному и тому же коду работать в двух режимах**.
 
-Here are some ideas to get you started:
+## Режимы работы
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+🏠 **Shared hosting mode**  
+Классический PHP runtime  
+`Apache / Nginx + PHP`
+
+🧱 **Compiled mode (KPHP)**  
+Компиляция PHP-кода в **статический бинарник** с высокой производительностью.
+
+> 🎯 **Главная идея:** один код работает как  
+> обычное **PHP-приложение** и как **скомпилированный высокопроизводительный сервер**.
+
+---
+
+# ✨ Почему LPhenom
+
+- ⚙️ KPHP-friendly архитектура — совместима с [VKCOM/kphp](https://github.com/VKCOM/kphp) и не использует магию или динамику  
+- 🧩 Модульная экосистема из независимых пакетов  
+- 🧠 Простая и читаемая архитектура  
+- 🔌 Единый API для realtime (WebSocket / Long polling)  
+- 🛠 Self-hosted friendly — учитывает ограничения shared hosting  
+
+---
+
+# 🧬 Основные принципы
+
+## 1. Совместимость с KPHP
+
+Фреймворк проектируется так, чтобы код можно было **скомпилировать в бинарь**.
+
+Поэтому в архитектуре запрещены:
+
+- Reflection
+- dynamic class loading
+- eval
+- variable variables
+- heavy magic
+
+✅ Все зависимости **регистрируются явно**.
+
+---
+
+## 2. Простая архитектура
+
+LPhenom избегает сложных ORM и магии.
+
+Базовая схема архитектуры:
+
+<img width="341" height="512" alt="image" src="https://github.com/user-attachments/assets/e8af7be2-7373-4a59-a46d-0cc2ab3bec2f" />
+
+📦 Модели используются **только как DTO**.
+
+---
+
+## 3. Модульность
+
+Экосистема LPhenom состоит из **независимых пакетов**.
+
+Каждый пакет:
+
+- 📦 отдельный Composer-пакет
+- 🗂 отдельный Git-репозиторий
+- 🪶 минимальные зависимости
+
+Это позволяет использовать **части фреймворка независимо**.
+
+---
+
+## 4. Один код для realtime
+
+LPhenom предоставляет единый API для:
+
+- 🌐 WebSocket
+- 📡 Long polling
+
+Это позволяет писать **один бизнес-код**, который работает в обоих режимах.
+
+---
+
+## 5. Self-hosted friendly
+
+Фреймворк учитывает реальные ограничения окружения:
+
+- 🏠 shared hosting
+- 🔒 отсутствие root доступа
+- 🧓 старые версии MySQL
+
+---
+
+# TL;DR
+
+**LPhenom = PHP сейчас + KPHP потом.**
+
+Вы пишете обычное PHP-приложение, которое при необходимости можно **скомпилировать в высокопроизводительный сервер**.
