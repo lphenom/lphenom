@@ -57,15 +57,16 @@
             "url": "https://github.com/lphenom/storage"
         }
     ],
+    "version": "0.1.0",
     "require": {
         "php": ">=8.1",
         "lphenom/core": "^0.1",
         "lphenom/http": "^0.1",
         "lphenom/log": "^0.1",
-        "lphenom/db": "^0.3",
+        "lphenom/db": "^0.1",
         "lphenom/cache": "^0.1",
-        "lphenom/redis": "^0.3",
-        "lphenom/queue": "^0.2",
+        "lphenom/redis": "^0.1",
+        "lphenom/queue": "^0.1",
         "lphenom/realtime": "^0.1",
         "lphenom/storage": "^0.1",
         "lphenom/media": "^0.1",

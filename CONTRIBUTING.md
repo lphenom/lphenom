@@ -1,60 +1,82 @@
-# Contributing to LPhenom
+# Участие в разработке lphenom/lphenom
 
-Thank you for considering contributing to LPhenom!
+Спасибо за интерес к проекту! 🎉
 
-## Development Setup
+## Требования
+
+- PHP >= 8.1
+- Docker + Docker Compose (для запуска окружения)
+- Composer
+
+## Настройка окружения
 
 ```bash
-# Clone the repository
 git clone git@github.com:lphenom/lphenom.git
 cd lphenom
 
-# Start development environment
+# Запуск окружения (MySQL + Redis)
 make up
 
-# Run tests
+# Установка зависимостей
+make install
+
+# Запуск тестов
 make test
-
-# Run linter
-make lint
-
-# Run static analysis
-make analyse
 ```
 
-## Coding Standards
+## Стиль кода
 
-- **PHP >= 8.1** — strict_types in every file
-- **KPHP compatible** — no reflection, eval, dynamic class loading, variable variables
-- **No trailing commas** in function arguments (KPHP limitation)
-- **No constructor property promotion** — explicit property declarations
-- **No readonly properties** — use private + getter
-- **No match expressions** — use if/elseif chains
-- **No str_starts_with/str_ends_with/str_contains** — use Str:: utils from lphenom/core
-- **No callable in typed arrays** — use interfaces
+PSR-12. Автоисправление:
 
-## Pull Request Process
+```bash
+make lint-fix
+```
 
-1. Fork the repository
-2. Create a feature branch from `main`
-3. Write tests for your changes
-4. Ensure all tests pass: `make test`
-5. Ensure code style: `make lint`
-6. Ensure static analysis: `make analyse`
-7. Submit a pull request
+Проверка:
 
-## Commit Messages
+```bash
+make lint
+```
 
-Follow conventional commits:
+## Статический анализ
 
-- `feat:` — new feature
-- `fix:` — bug fix
-- `docs:` — documentation
-- `chore:` — maintenance
-- `test:` — test additions/changes
-- `ci:` — CI/CD changes
+```bash
+make analyse   # PHPStan level 5
+```
 
-## Code of Conduct
+## Совместимость с KPHP
 
-Be respectful and constructive. We follow the [Contributor Covenant](https://www.contributor-covenant.org/).
+Весь код **обязан** оставаться KPHP-совместимым. Правила:
 
+- Нет constructor property promotion (`__construct(private $x)`)
+- Нет `readonly` свойств
+- Нет `Reflection`, `eval()`, `$$var`, `new $className()`
+- Нет `str_starts_with`, `str_ends_with`, `str_contains` — используйте `substr`/`strpos`
+- `try/catch` всегда с явным `catch`
+- Нет `callable` в типизированных массивах
+- Нет trailing commas в аргументах функций
+- Нет `match` выражений — используйте `if/elseif`
+
+## Сообщения коммитов
+
+Следуйте [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat(kernel): добавить новый провайдер
+fix(kernel): исправить загрузку конфига
+docs(kernel): обновить документацию bootstrap
+test(kernel): добавить тест HttpKernel
+chore: обновить CI конфигурацию
+```
+
+## Чеклист Pull Request
+
+- [ ] Тесты проходят: `make test`
+- [ ] Нет ошибок линтера: `make lint`
+- [ ] PHPStan проходит: `make analyse`
+- [ ] KPHP-совместимо (нет запрещённых конструкций)
+- [ ] Документация обновлена при изменении публичного API
+
+## Лицензия
+
+Участвуя в проекте, вы соглашаетесь, что ваши изменения будут лицензированы под [MIT License](LICENSE).

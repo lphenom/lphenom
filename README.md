@@ -88,17 +88,17 @@ php bin/lphenom build:kphp       # Build KPHP binary
 - ✅ Нет constructor property promotion, readonly, match
 - ✅ Нет str_starts_with/str_ends_with/str_contains
 
-## Development
+## Разработка
 
 ```bash
-make up        # Start MySQL + Redis
-make install   # Install dependencies
-make test      # Run tests
-make lint      # Check code style
-make analyse   # Static analysis
-make check     # All checks
+make up        # Запуск MySQL + Redis
+make install   # Установка зависимостей
+make test      # Запуск тестов
+make lint      # Проверка стиля кода
+make analyse   # Статический анализ
+make check     # Все проверки
 ```
 
-## License
+## Лицензия
 
-MIT — see [LICENSE](LICENSE)
+MIT — см. [LICENSE](LICENSE)

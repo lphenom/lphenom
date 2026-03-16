@@ -1,28 +1,26 @@
-# Security Policy
+# Политика безопасности
 
-## Supported Versions
+## Поддерживаемые версии
 
-| Version | Supported          |
-|---------|--------------------|
-| 0.1.x   | :white_check_mark: |
+| Версия | Поддержка |
+|--------|-----------|
+| 0.x    | ✅         |
 
-## Reporting a Vulnerability
+## Сообщить об уязвимости
 
-If you discover a security vulnerability, please report it responsibly:
+Пожалуйста, **не** создавайте публичный GitHub Issue для уязвимостей безопасности.
 
-1. **Do NOT open a public issue.**
-2. Email: **popkovd.o@yandex.ru**
-3. Include:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if any)
+Отправьте подробный отчёт на **popkovd.o@yandex.ru**, указав:
 
-We will acknowledge your report within 48 hours and provide a fix timeline.
+- Описание уязвимости
+- Шаги для воспроизведения
+- Затронутые версии
+- Предлагаемое исправление (опционально)
 
-## Disclosure Policy
+Мы стремимся ответить в течение **72 часов** и выпустить патч в течение **7 дней** для подтверждённых проблем.
 
-- We follow responsible disclosure.
-- Security patches will be released as patch versions (e.g., 0.1.1).
-- Credit will be given to reporters unless they prefer anonymity.
+## Политика раскрытия
 
+- Мы следуем принципам ответственного раскрытия.
+- Патчи безопасности выпускаются как патч-версии (например, 0.1.1).
+- Авторство отчёта указывается, если автор не предпочитает анонимность.
