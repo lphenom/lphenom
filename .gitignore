@@ -5,5 +5,7 @@
 /.php-cs-fixer.cache
 /build/*.phar
 /build/kphp-out/
+/build/kphp-entrypoint.generated.php
 /.idea/
+.env
 

@@ -34,15 +34,16 @@ if (!$autoloaded) {
     exit(1);
 }
 
-use LPhenom\Lphenom\AppFactory;
-use LPhenom\Lphenom\Console\Command\BuildKphpCommand;
-use LPhenom\Lphenom\Console\Command\BuildPharCommand;
-use LPhenom\Lphenom\Console\Command\MigrateCommand;
-use LPhenom\Lphenom\Console\Command\MigrateRollbackCommand;
-use LPhenom\Lphenom\Console\Command\MigrateStatusCommand;
-use LPhenom\Lphenom\Console\Command\QueueWorkCommand;
-use LPhenom\Lphenom\Console\Command\ServeCommand;
-use LPhenom\Lphenom\Console\ConsoleApplication;
+use LPhenom\LPhenom\AppFactory;
+use LPhenom\LPhenom\Console\Command\BuildKphpCommand;
+use LPhenom\LPhenom\Console\Command\BuildManifestCommand;
+use LPhenom\LPhenom\Console\Command\BuildPharCommand;
+use LPhenom\LPhenom\Console\Command\MigrateCommand;
+use LPhenom\LPhenom\Console\Command\MigrateRollbackCommand;
+use LPhenom\LPhenom\Console\Command\MigrateStatusCommand;
+use LPhenom\LPhenom\Console\Command\QueueWorkCommand;
+use LPhenom\LPhenom\Console\Command\ServeCommand;
+use LPhenom\LPhenom\Console\ConsoleApplication;
 
 // Determine base path (project root where composer.json lives)
 $basePath = dirname(__DIR__);
@@ -68,6 +69,7 @@ $console->add(new QueueWorkCommand());
 $console->add(new ServeCommand());
 $console->add(new BuildPharCommand());
 $console->add(new BuildKphpCommand());
+$console->add(new BuildManifestCommand());
 
 exit($console->run($argv));
 

@@ -8,8 +8,7 @@ declare(strict_types=1);
  * @return array<string, mixed>
  */
 return [
-    'name'  => 'LPhenom App',
-    'env'   => 'production',
-    'debug' => false,
+    'name'  => $_ENV['APP_NAME'] ?? 'LPhenom App',
+    'env'   => $_ENV['APP_ENV'] ?? 'production',
+    'debug' => (bool) ($_ENV['APP_DEBUG'] ?? false),
 ];
-

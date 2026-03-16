@@ -78,12 +78,12 @@
     },
     "autoload": {
         "psr-4": {
-            "LPhenom\\Lphenom\\": "src/"
+            "LPhenom\\LPhenom\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "LPhenom\\Lphenom\\Tests\\": "tests/"
+            "LPhenom\\LPhenom\\Tests\\": "tests/"
         }
     },
     "bin": [

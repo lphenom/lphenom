@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Console\Command;
+namespace LPhenom\LPhenom\Console\Command;
 
-use LPhenom\Lphenom\Application;
-use LPhenom\Lphenom\Console\CommandInterface;
+use LPhenom\LPhenom\Application;
+use LPhenom\LPhenom\Console\CommandInterface;
 
 /**
  * Build a PHAR archive for shared hosting deployment.
@@ -45,10 +45,15 @@ final class BuildPharCommand implements CommandInterface
         }
 
         echo 'Building PHAR...' . PHP_EOL;
+        echo 'Output: ' . $output . PHP_EOL;
 
         /** @var int $result */
         $result = 0;
-        $cmd    = sprintf('php -d phar.readonly=0 %s', escapeshellarg($buildScript));
+        $cmd    = sprintf(
+            'LPHENOM_PHAR_OUTPUT=%s php -d phar.readonly=0 %s',
+            escapeshellarg($output),
+            escapeshellarg($buildScript)
+        );
         passthru($cmd, $result);
 
         if ($result !== 0) {
@@ -56,7 +61,7 @@ final class BuildPharCommand implements CommandInterface
             return 1;
         }
 
-        echo 'PHAR built successfully.' . PHP_EOL;
+        echo 'PHAR built successfully: ' . $output . PHP_EOL;
         return 0;
     }
 }

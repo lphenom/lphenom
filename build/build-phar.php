@@ -4,6 +4,13 @@
  * PHAR build script for lphenom/lphenom.
  *
  * Packages src/ + vendor/ + bin/ + config/ into a self-contained PHAR archive.
+ *
+ * Filtering:
+ *   1. Dev packages (require-dev) are completely excluded from the PHAR.
+ *   2. @lphenom-build annotations filter LPhenom source files:
+ *      - no annotation / shared,kphp / shared → included
+ *      - kphp / none → excluded
+ *
  * Run with phar.readonly=0:
  *   php -d phar.readonly=0 build/build-phar.php
  */
@@ -11,24 +18,60 @@
 declare(strict_types=1);
 
 $buildDir = dirname(__DIR__);
-$pharFile = $buildDir . '/build/lphenom.phar';
+
+// Autoload to get PharFileFilter
+require_once $buildDir . '/vendor/autoload.php';
+
+use LPhenom\LPhenom\Build\PharFileFilter;
+
+$pharFile = getenv('LPHENOM_PHAR_OUTPUT') !== false
+    ? (string) getenv('LPHENOM_PHAR_OUTPUT')
+    : $buildDir . '/build/lphenom.phar';
 
 if (file_exists($pharFile)) {
     unlink($pharFile);
 }
 
+// Initialize filter (dev-package exclusion + annotation filtering)
+$filter = PharFileFilter::createDefault($buildDir);
+
+// Show what will be excluded
+$devPaths = $filter->getDevFilter()->getDevPaths();
+echo 'Dev packages excluded (' . count($devPaths) . '):' . PHP_EOL;
+foreach ($devPaths as $dp) {
+    echo '  ✗ ' . basename(dirname($dp)) . '/' . basename($dp) . PHP_EOL;
+}
+echo '' . PHP_EOL;
+
 $phar = new Phar($pharFile, 0, 'lphenom.phar');
 $phar->startBuffering();
 
+$skippedDev        = 0;
+$skippedAnnotation = 0;
+$included          = 0;
+
 /**
- * Add directory contents to the PHAR.
+ * Add directory contents to the PHAR with full filtering.
  *
- * @param Phar   $phar
- * @param string $base     absolute path to the source directory
- * @param string $prefix   path prefix inside the PHAR
+ * @param Phar           $phar
+ * @param string         $base         Absolute path to the source directory
+ * @param string         $prefix       Path prefix inside the PHAR
+ * @param PharFileFilter $filter       Annotation + dev-package filter
+ * @param int            &$included          Included file counter
+ * @param int            &$skippedDev        Skipped-by-dev counter
+ * @param int            &$skippedAnnotation Skipped-by-annotation counter
+ * @param bool           $applyFilter  Whether to apply filtering
  */
-function addDirectory(Phar $phar, string $base, string $prefix): void
-{
+function addDirectory(
+    Phar $phar,
+    string $base,
+    string $prefix,
+    PharFileFilter $filter,
+    int &$included,
+    int &$skippedDev,
+    int &$skippedAnnotation,
+    bool $applyFilter = true
+): void {
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($base, RecursiveDirectoryIterator::SKIP_DOTS)
     );
@@ -37,27 +80,51 @@ function addDirectory(Phar $phar, string $base, string $prefix): void
         if (!$file->isFile()) {
             continue;
         }
-        $localPath = $prefix . '/' . ltrim(str_replace($base, '', $file->getPathname()), '/');
-        $phar->addFile($file->getPathname(), $localPath);
+
+        $filePath = $file->getPathname();
+
+        if ($applyFilter) {
+            // Check dev-package exclusion (fast path — no file reading)
+            if ($filter->getDevFilter()->isDevFile($filePath)) {
+                $skippedDev++;
+                continue;
+            }
+
+            // Check @lphenom-build annotation (reads PHP file header)
+            // shouldInclude() also checks isDevFile, but we already did that above,
+            // so this will only hit the annotation check path.
+            if (!$filter->shouldInclude($filePath)) {
+                $skippedAnnotation++;
+                continue;
+            }
+        }
+
+        $localPath = $prefix . '/' . ltrim(str_replace($base, '', $filePath), '/');
+        $phar->addFile($filePath, $localPath);
+        $included++;
     }
 }
 
-// Add source files
-addDirectory($phar, $buildDir . '/src', 'src');
+// Add source files (with annotation filtering)
+echo 'Adding src/ ...' . PHP_EOL;
+addDirectory($phar, $buildDir . '/src', 'src', $filter, $included, $skippedDev, $skippedAnnotation);
 
-// Add config examples
+// Add config (no filtering)
 if (is_dir($buildDir . '/config')) {
-    addDirectory($phar, $buildDir . '/config', 'config');
+    echo 'Adding config/ ...' . PHP_EOL;
+    addDirectory($phar, $buildDir . '/config', 'config', $filter, $included, $skippedDev, $skippedAnnotation, false);
 }
 
-// Add vendor autoloader (production deps only)
+// Add vendor/ (with dev-package + annotation filtering)
 if (is_dir($buildDir . '/vendor')) {
-    addDirectory($phar, $buildDir . '/vendor', 'vendor');
+    echo 'Adding vendor/ (excluding dev packages + @lphenom-build filtering) ...' . PHP_EOL;
+    addDirectory($phar, $buildDir . '/vendor', 'vendor', $filter, $included, $skippedDev, $skippedAnnotation);
 }
 
 // Add bin/lphenom entrypoint
 if (is_file($buildDir . '/bin/lphenom')) {
     $phar->addFile($buildDir . '/bin/lphenom', 'bin/lphenom');
+    $included++;
 }
 
 // Bootstrap stub
@@ -86,8 +153,11 @@ $phar->compressFiles(Phar::GZ);
 $size  = number_format((int) filesize($pharFile));
 $count = count($phar);
 
+echo PHP_EOL;
 echo "PHAR built: {$pharFile}" . PHP_EOL;
-echo "  Size:  {$size} bytes" . PHP_EOL;
-echo "  Files: {$count}" . PHP_EOL;
+echo "  Size:              {$size} bytes" . PHP_EOL;
+echo "  Files included:    {$count}" . PHP_EOL;
+echo "  Skipped (dev):     {$skippedDev}" . PHP_EOL;
+echo "  Skipped (annotation): {$skippedAnnotation}" . PHP_EOL;
 echo "=== PHAR build: OK ===" . PHP_EOL;
 

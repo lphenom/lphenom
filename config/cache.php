@@ -8,7 +8,6 @@ declare(strict_types=1);
  * @return array<string, mixed>
  */
 return [
-    'driver' => 'file',
-    'path'   => '/tmp/lphenom-cache',
+    'driver' => $_ENV['CACHE_DRIVER'] ?? 'file',
+    'path'   => $_ENV['CACHE_PATH'] ?? '/tmp/lphenom-cache',
 ];
-

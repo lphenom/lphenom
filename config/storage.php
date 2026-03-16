@@ -8,7 +8,6 @@ declare(strict_types=1);
  * @return array<string, mixed>
  */
 return [
-    'driver' => 'local',
-    'root'   => '/tmp/lphenom-storage',
+    'driver' => $_ENV['STORAGE_DRIVER'] ?? 'local',
+    'root'   => $_ENV['STORAGE_ROOT'] ?? '/tmp/lphenom-storage',
 ];
-

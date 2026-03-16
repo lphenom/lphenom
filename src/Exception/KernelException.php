@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Exception;
+namespace LPhenom\LPhenom\Exception;
 
 use LPhenom\Core\Exception\LPhenomException;
 

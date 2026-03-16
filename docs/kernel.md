@@ -78,8 +78,8 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use LPhenom\Http\Request;
 use LPhenom\Http\Router;
-use LPhenom\Lphenom\AppFactory;
-use LPhenom\Lphenom\Http\HttpKernel;
+use LPhenom\LPhenom\AppFactory;
+use LPhenom\LPhenom\Http\HttpKernel;
 
 // Загрузить конфиг и построить приложение
 $config = AppFactory::loadConfig(dirname(__DIR__));
@@ -103,7 +103,7 @@ $response->send();
 Главный контейнер приложения. Содержит `Container`, `Config` и список провайдеров.
 
 ```php
-use LPhenom\Lphenom\Application;
+use LPhenom\LPhenom\Application;
 
 $app = new Application($container, $config, '/path/to/project');
 $app->addProvider(new MyProvider());
@@ -113,7 +113,7 @@ $app->boot();
 ### ServiceProviderInterface
 
 ```php
-use LPhenom\Lphenom\ServiceProviderInterface;
+use LPhenom\LPhenom\ServiceProviderInterface;
 
 final class MyProvider implements ServiceProviderInterface
 {
@@ -145,7 +145,7 @@ $config = AppFactory::loadConfig($basePath);
 ### HttpKernel
 
 ```php
-use LPhenom\Lphenom\Http\HttpKernel;
+use LPhenom\LPhenom\Http\HttpKernel;
 
 $kernel   = new HttpKernel($router, $middlewareStack);
 $response = $kernel->handle($request);
@@ -168,8 +168,10 @@ php bin/lphenom queue:work --once
 php bin/lphenom queue:work --max-jobs=10
 
 # Сборка
-php bin/lphenom build:phar
-php bin/lphenom build:kphp
+php bin/lphenom build:phar           # → build/lphenom.phar
+php bin/lphenom build:phar --output=dist/myapp.phar
+php bin/lphenom build:kphp           # → build/kphp-out/
+php bin/lphenom build:kphp --output=build/my-out
 
 # Сервер разработки
 php bin/lphenom serve

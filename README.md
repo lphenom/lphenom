@@ -18,8 +18,8 @@ declare(strict_types=1);
 require __DIR__ . '/vendor/autoload.php';
 
 use LPhenom\Http\Request;
-use LPhenom\Lphenom\AppFactory;
-use LPhenom\Lphenom\Http\HttpKernel;
+use LPhenom\LPhenom\AppFactory;
+use LPhenom\LPhenom\Http\HttpKernel;
 
 $config   = AppFactory::loadConfig(__DIR__);
 $app      = AppFactory::create(__DIR__, $config);

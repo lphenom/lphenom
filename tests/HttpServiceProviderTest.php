@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Tests;
+namespace LPhenom\LPhenom\Tests;
 
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
 use LPhenom\Http\MiddlewareStack;
 use LPhenom\Http\Router;
-use LPhenom\Lphenom\Http\HttpKernel;
-use LPhenom\Lphenom\Provider\HttpServiceProvider;
+use LPhenom\LPhenom\Http\HttpKernel;
+use LPhenom\LPhenom\Provider\HttpServiceProvider;
 use PHPUnit\Framework\TestCase;
 
 final class HttpServiceProviderTest extends TestCase

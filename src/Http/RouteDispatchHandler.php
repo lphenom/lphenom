@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Http;
+namespace LPhenom\LPhenom\Http;
 
 use LPhenom\Http\HandlerInterface;
 use LPhenom\Http\Request;

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Tests;
+namespace LPhenom\LPhenom\Tests;
 
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
 use LPhenom\Log\Contract\LoggerInterface;
 use LPhenom\Log\Logger\NullLogger;
-use LPhenom\Lphenom\Provider\LogServiceProvider;
+use LPhenom\LPhenom\Provider\LogServiceProvider;
 use PHPUnit\Framework\TestCase;
 
 final class LogServiceProviderTest extends TestCase

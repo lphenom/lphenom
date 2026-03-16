@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom;
+namespace LPhenom\LPhenom;
 
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
 use LPhenom\Core\EnvLoader\EnvLoader;
 use LPhenom\Db\Migration\MigrationInterface;
-use LPhenom\Lphenom\Provider\CacheServiceProvider;
-use LPhenom\Lphenom\Provider\DatabaseServiceProvider;
-use LPhenom\Lphenom\Provider\HttpServiceProvider;
-use LPhenom\Lphenom\Provider\LogServiceProvider;
-use LPhenom\Lphenom\Provider\MigrateServiceProvider;
-use LPhenom\Lphenom\Provider\QueueServiceProvider;
-use LPhenom\Lphenom\Provider\RealtimeServiceProvider;
-use LPhenom\Lphenom\Provider\RedisServiceProvider;
-use LPhenom\Lphenom\Provider\StorageServiceProvider;
+use LPhenom\LPhenom\Provider\CacheServiceProvider;
+use LPhenom\LPhenom\Provider\DatabaseServiceProvider;
+use LPhenom\LPhenom\Provider\HttpServiceProvider;
+use LPhenom\LPhenom\Provider\LogServiceProvider;
+use LPhenom\LPhenom\Provider\MigrateServiceProvider;
+use LPhenom\LPhenom\Provider\QueueServiceProvider;
+use LPhenom\LPhenom\Provider\RealtimeServiceProvider;
+use LPhenom\LPhenom\Provider\RedisServiceProvider;
+use LPhenom\LPhenom\Provider\StorageServiceProvider;
 
 /**
  * Application factory — builds a fully wired Application.

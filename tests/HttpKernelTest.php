@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Tests;
+namespace LPhenom\LPhenom\Tests;
 
 use LPhenom\Http\HandlerInterface;
 use LPhenom\Http\MiddlewareStack;
 use LPhenom\Http\Request;
 use LPhenom\Http\Response;
 use LPhenom\Http\Router;
-use LPhenom\Lphenom\Http\HttpKernel;
+use LPhenom\LPhenom\Http\HttpKernel;
 use PHPUnit\Framework\TestCase;
 
 final class HttpKernelTest extends TestCase

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Provider;
+namespace LPhenom\LPhenom\Provider;
 
 use LPhenom\Cache\CacheInterface;
 use LPhenom\Cache\Driver\FileCache;
@@ -10,7 +10,7 @@ use LPhenom\Cache\Driver\RedisCache;
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
 use LPhenom\Core\Container\ServiceFactoryInterface;
-use LPhenom\Lphenom\ServiceProviderInterface;
+use LPhenom\LPhenom\ServiceProviderInterface;
 use LPhenom\Redis\Client\RedisClientInterface;
 use LPhenom\Storage\LocalFilesystemStorage;
 

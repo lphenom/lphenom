@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Tests;
+namespace LPhenom\LPhenom\Tests;
 
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
-use LPhenom\Lphenom\Application;
-use LPhenom\Lphenom\Console\CommandInterface;
-use LPhenom\Lphenom\Console\ConsoleApplication;
+use LPhenom\LPhenom\Application;
+use LPhenom\LPhenom\Console\CommandInterface;
+use LPhenom\LPhenom\Console\ConsoleApplication;
 use PHPUnit\Framework\TestCase;
 
 final class ConsoleApplicationTest extends TestCase

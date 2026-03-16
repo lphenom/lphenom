@@ -2,7 +2,7 @@
 <?php
 
 /**
- * PHAR smoke-test: require the built PHAR and verify autoloading works.
+ * PHAR smoke-test: require the built PHAR autoloader and verify classes load.
  *
  * Usage: php build/smoke-test-phar.php [/path/to/lphenom.phar]
  */
@@ -16,7 +16,8 @@ if (!file_exists($pharFile)) {
     exit(1);
 }
 
-require $pharFile;
+// Load only the autoloader, not the CLI entrypoint
+require 'phar://' . $pharFile . '/vendor/autoload.php';
 
 // Test Application creation
 $config = new \LPhenom\Core\Config\Config([
@@ -24,13 +25,12 @@ $config = new \LPhenom\Core\Config\Config([
 ]);
 
 $container = new \LPhenom\Core\Container\Container();
-$app = new \LPhenom\Lphenom\Application($container, $config, '/tmp');
+$app = new \LPhenom\LPhenom\Application($container, $config, '/tmp');
 assert($app->getConfig()->getString('app.name') === 'lphenom-test', 'Config failed');
 echo 'smoke-test: application ok' . PHP_EOL;
 
 // Test that ServiceProviderInterface exists
-assert(interface_exists(\LPhenom\Lphenom\ServiceProviderInterface::class), 'ServiceProviderInterface not loaded');
+assert(interface_exists(\LPhenom\LPhenom\ServiceProviderInterface::class), 'ServiceProviderInterface not loaded');
 echo 'smoke-test: provider interface ok' . PHP_EOL;
 
 echo '=== PHAR smoke-test: OK ===' . PHP_EOL;
-

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Provider;
+namespace LPhenom\LPhenom\Provider;
 
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
@@ -10,7 +10,7 @@ use LPhenom\Core\Container\ServiceFactoryInterface;
 use LPhenom\Log\Contract\LoggerInterface;
 use LPhenom\Log\Logger\FileLogger;
 use LPhenom\Log\Logger\NullLogger;
-use LPhenom\Lphenom\ServiceProviderInterface;
+use LPhenom\LPhenom\ServiceProviderInterface;
 
 /**
  * Registers a logger from lphenom/log.

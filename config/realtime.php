@@ -8,7 +8,6 @@ declare(strict_types=1);
  * @return array<string, mixed>
  */
 return [
-    'driver'  => 'database',
-    'enabled' => true,
+    'driver'  => $_ENV['REALTIME_DRIVER'] ?? 'database',
+    'enabled' => (bool) ($_ENV['REALTIME_ENABLED'] ?? true),
 ];
-

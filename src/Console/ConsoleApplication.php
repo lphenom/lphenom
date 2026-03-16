@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Console;
+namespace LPhenom\LPhenom\Console;
 
-use LPhenom\Lphenom\Application;
+use LPhenom\LPhenom\Application;
 
 /**
  * Console application — dispatches commands by name.

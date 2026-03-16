@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Console\Command;
+namespace LPhenom\LPhenom\Console\Command;
 
-use LPhenom\Lphenom\Application;
-use LPhenom\Lphenom\Console\CommandInterface;
+use LPhenom\LPhenom\Application;
+use LPhenom\LPhenom\Console\CommandInterface;
 use LPhenom\Migrate\Migrator;
 
 /**

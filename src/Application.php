@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom;
+namespace LPhenom\LPhenom;
 
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;

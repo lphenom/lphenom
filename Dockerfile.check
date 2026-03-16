@@ -1,6 +1,8 @@
 # =============================================================================
 # Dockerfile.check — KPHP binary build + PHAR build verification
 #
+# Prerequisites: run `composer install` on the host first (vendor/ must exist).
+#
 # Usage:
 #   docker build -f Dockerfile.check -t lphenom-check .
 #
@@ -26,14 +28,10 @@ RUN apt-get update -qq \
 
 WORKDIR /build
 
-COPY src/    ./src/
-COPY build/  ./build/
-
-# Install Composer for dependency resolution
-COPY --from=composer:2.7.9 /usr/bin/composer /usr/bin/composer
-COPY composer.json ./composer.json
-
-RUN composer install --no-dev --no-progress --prefer-dist --optimize-autoloader --no-interaction 2>/dev/null || true
+# Copy source + vendor (pre-installed from host via composer install)
+COPY src/     ./src/
+COPY build/   ./build/
+COPY vendor/  ./vendor/
 
 RUN kphp \
         -d /build/kphp-out \
@@ -49,25 +47,18 @@ RUN useradd -m kphp-runner \
 # -----------------------------------------------------------------------------
 # Stage 2: PHAR build
 # -----------------------------------------------------------------------------
-FROM php:8.1.31-cli AS phar-build
+FROM php:8.1-cli AS phar-build
 
 WORKDIR /build
 
 RUN echo "phar.readonly = Off" > /usr/local/etc/php/conf.d/phar.ini
 
-COPY --from=composer:2.7.9 /usr/bin/composer /usr/bin/composer
-
+# Copy source + vendor (pre-installed)
 COPY src/          ./src/
 COPY build/        ./build/
 COPY bin/          ./bin/
+COPY vendor/       ./vendor/
 COPY composer.json ./composer.json
-
-RUN composer install \
-        --no-dev \
-        --no-progress \
-        --prefer-dist \
-        --optimize-autoloader \
-        --no-interaction
 
 RUN php -d phar.readonly=0 /build/build/build-phar.php
 
@@ -80,4 +71,3 @@ RUN php /build/build/smoke-test-phar.php /build/build/lphenom.phar \
 FROM scratch AS check-complete
 COPY --from=kphp-build /build/kphp-out/cli        /kphp-cli-binary
 COPY --from=phar-build /build/build/lphenom.phar   /lphenom.phar
-

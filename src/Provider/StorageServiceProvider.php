@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Provider;
+namespace LPhenom\LPhenom\Provider;
 
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
 use LPhenom\Core\Container\ServiceFactoryInterface;
-use LPhenom\Lphenom\ServiceProviderInterface;
+use LPhenom\LPhenom\ServiceProviderInterface;
 use LPhenom\Storage\LocalFilesystemStorage;
 use LPhenom\Storage\StorageInterface;
 

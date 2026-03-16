@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace LPhenom\Lphenom\Provider;
+namespace LPhenom\LPhenom\Provider;
 
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
 use LPhenom\Core\Container\ServiceFactoryInterface;
 use LPhenom\Http\MiddlewareStack;
 use LPhenom\Http\Router;
-use LPhenom\Lphenom\Http\HttpKernel;
-use LPhenom\Lphenom\ServiceProviderInterface;
+use LPhenom\LPhenom\Http\HttpKernel;
+use LPhenom\LPhenom\ServiceProviderInterface;
 
 /**
  * Registers HTTP components: Router, MiddlewareStack, HttpKernel.
