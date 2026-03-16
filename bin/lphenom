@@ -1,0 +1,73 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * LPhenom CLI — artisan-like console tool.
+ *
+ * Usage:
+ *   php bin/lphenom migrate
+ *   php bin/lphenom queue:work
+ *   php bin/lphenom build:phar
+ *   php bin/lphenom build:kphp
+ *   php bin/lphenom serve
+ */
+
+// Locate autoloader
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
+];
+
+$autoloaded = false;
+foreach ($autoloadPaths as $autoloadFile) {
+    if (is_file($autoloadFile)) {
+        require $autoloadFile;
+        $autoloaded = true;
+        break;
+    }
+}
+
+if (!$autoloaded) {
+    fwrite(STDERR, 'Composer autoloader not found. Run "composer install" first.' . PHP_EOL);
+    exit(1);
+}
+
+use LPhenom\Lphenom\AppFactory;
+use LPhenom\Lphenom\Console\Command\BuildKphpCommand;
+use LPhenom\Lphenom\Console\Command\BuildPharCommand;
+use LPhenom\Lphenom\Console\Command\MigrateCommand;
+use LPhenom\Lphenom\Console\Command\MigrateRollbackCommand;
+use LPhenom\Lphenom\Console\Command\MigrateStatusCommand;
+use LPhenom\Lphenom\Console\Command\QueueWorkCommand;
+use LPhenom\Lphenom\Console\Command\ServeCommand;
+use LPhenom\Lphenom\Console\ConsoleApplication;
+
+// Determine base path (project root where composer.json lives)
+$basePath = dirname(__DIR__);
+
+// If this is installed as a dependency, look for the project root
+if (is_file($basePath . '/../../composer.json')) {
+    $basePath = dirname($basePath, 2);
+}
+
+// Load config
+$config = AppFactory::loadConfig($basePath);
+
+// Build console application
+$app = AppFactory::createForConsole($basePath, $config);
+
+$console = new ConsoleApplication($app);
+
+// Register built-in commands
+$console->add(new MigrateCommand());
+$console->add(new MigrateRollbackCommand());
+$console->add(new MigrateStatusCommand());
+$console->add(new QueueWorkCommand());
+$console->add(new ServeCommand());
+$console->add(new BuildPharCommand());
+$console->add(new BuildKphpCommand());
+
+exit($console->run($argv));
+
