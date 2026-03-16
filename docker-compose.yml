@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lphenom-app
+    volumes:
+      - .:/app
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      DB_DRIVER: pdo_mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: lphenom
+      DB_USER: lphenom
+      DB_PASS: secret
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    working_dir: /app
+    command: ["php", "-a"]
+    stdin_open: true
+    tty: true
+
+  mysql:
+    image: mysql:8.0.36
+    container_name: lphenom-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: lphenom
+      MYSQL_USER: lphenom
+      MYSQL_PASSWORD: secret
+    ports:
+      - "13306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7.2.4-alpine
+    container_name: lphenom-redis
+    ports:
+      - "16379:6379"
+
+  composer:
+    image: composer:2.7.9
+    container_name: lphenom-composer
+    volumes:
+      - .:/app
+      - ~/.ssh:/root/.ssh:ro
+      - ~/.gitconfig:/root/.gitconfig:ro
+    working_dir: /app
+
+volumes:
+  mysql_data:
+
+
+
+

@@ -1,98 +1,104 @@
-# ⚡ LPhenom — PHP framework for shared hosting and KPHP compilation
+# ⚡ LPhenom — PHP framework kernel
 
-🚀 **LPhenom** — PHP-фреймворк нового поколения, который позволяет **одному и тому же коду работать в двух режимах**.
+**lphenom/lphenom** — ядро фреймворка LPhenom, которое связывает все подпакеты
+и предоставляет Laravel-like bootstrap.
 
-## Режимы работы
+## Установка
 
-🏠 **Shared hosting mode**  
-Классический PHP runtime  
-`Apache / Nginx + PHP`
+```bash
+composer require lphenom/lphenom
+```
 
-🧱 **Compiled mode (KPHP)**  
-Компиляция PHP-кода в **статический бинарник** с высокой производительностью.
+## Быстрый старт
 
-> 🎯 **Главная идея:** один код работает как  
-> обычное **PHP-приложение** и как **скомпилированный высокопроизводительный сервер**.
+```php
+<?php
+declare(strict_types=1);
 
----
+require __DIR__ . '/vendor/autoload.php';
 
-# ✨ Почему LPhenom
+use LPhenom\Http\Request;
+use LPhenom\Lphenom\AppFactory;
+use LPhenom\Lphenom\Http\HttpKernel;
 
-- ⚙️ KPHP-friendly архитектура — совместима с [VKCOM/kphp](https://github.com/VKCOM/kphp) и не использует магию или динамику  
-- 🧩 Модульная экосистема из независимых пакетов  
-- 🧠 Простая и читаемая архитектура  
-- 🔌 Единый API для realtime (WebSocket / Long polling)  
-- 🛠 Self-hosted friendly — учитывает ограничения shared hosting  
+$config   = AppFactory::loadConfig(__DIR__);
+$app      = AppFactory::create(__DIR__, $config);
+$kernel   = $app->getContainer()->get(HttpKernel::class);
+$response = $kernel->handle(Request::fromGlobals());
+$response->send();
+```
 
----
+## CLI Tool
 
-# 🧬 Основные принципы
+```bash
+php bin/lphenom migrate          # Run migrations
+php bin/lphenom migrate:rollback # Rollback last batch
+php bin/lphenom migrate:status   # Show migration status
+php bin/lphenom queue:work       # Start queue worker
+php bin/lphenom serve            # Development server
+php bin/lphenom build:phar       # Build PHAR for shared hosting
+php bin/lphenom build:kphp       # Build KPHP binary
+```
 
-## 1. Совместимость с KPHP
+## Включённые пакеты
 
-Фреймворк проектируется так, чтобы код можно было **скомпилировать в бинарь**.
+| Пакет | Назначение |
+|---|---|
+| [lphenom/core](https://github.com/lphenom/core) | Container, Config, EnvLoader, Utils |
+| [lphenom/http](https://github.com/lphenom/http) | Router, Middleware, Request/Response |
+| [lphenom/log](https://github.com/lphenom/log) | Logging (File, Null, Stdout) |
+| [lphenom/db](https://github.com/lphenom/db) | Database (PDO, FFI MySQL) |
+| [lphenom/cache](https://github.com/lphenom/cache) | Caching (File, Redis, DB) |
+| [lphenom/redis](https://github.com/lphenom/redis) | Redis client (ext-redis, RESP) |
+| [lphenom/queue](https://github.com/lphenom/queue) | Queue (DB, Redis) |
+| [lphenom/realtime](https://github.com/lphenom/realtime) | Realtime (Long polling, WebSocket) |
+| [lphenom/storage](https://github.com/lphenom/storage) | File storage |
+| [lphenom/media](https://github.com/lphenom/media) | Image/Video processing |
+| [lphenom/migrate](https://github.com/lphenom/migrate) | Database migrations |
 
-Поэтому в архитектуре запрещены:
+## Два режима работы
 
-- Reflection
-- dynamic class loading
-- eval
-- variable variables
-- heavy magic
+### 🏠 Shared Hosting (PHP)
 
-✅ Все зависимости **регистрируются явно**.
+- Apache/Nginx + PHP
+- Очереди через cron
+- Realtime через long polling
+- Деплой через PHAR или FTP
 
----
+### 🧱 Compiled (KPHP)
 
-## 2. Простая архитектура
+- Статический бинарник
+- Встроенный queue worker
+- WebSocket через Redis pub/sub
+- Высокая производительность
 
-LPhenom избегает сложных ORM и магии.
+## Документация
 
-Базовая схема архитектуры:
+- [Kernel — Как собрать приложение](docs/kernel.md)
+- [Hosting — Shared & KPHP](docs/hosting.md)
 
-<img width="341" height="512" alt="image" src="https://github.com/user-attachments/assets/e8af7be2-7373-4a59-a46d-0cc2ab3bec2f" />
+## KPHP-совместимость
 
-📦 Модели используются **только как DTO**.
+Весь код совместим с [KPHP](https://github.com/VKCOM/kphp):
 
----
+- ✅ `declare(strict_types=1)` в каждом файле
+- ✅ Нет reflection, eval, dynamic class loading
+- ✅ Все зависимости регистрируются явно через интерфейсы
+- ✅ Нет callable в массивах — используются `ServiceFactoryInterface`
+- ✅ Нет constructor property promotion, readonly, match
+- ✅ Нет str_starts_with/str_ends_with/str_contains
 
-## 3. Модульность
+## Development
 
-Экосистема LPhenom состоит из **независимых пакетов**.
+```bash
+make up        # Start MySQL + Redis
+make install   # Install dependencies
+make test      # Run tests
+make lint      # Check code style
+make analyse   # Static analysis
+make check     # All checks
+```
 
-Каждый пакет:
+## License
 
-- 📦 отдельный Composer-пакет
-- 🗂 отдельный Git-репозиторий
-- 🪶 минимальные зависимости
-
-Это позволяет использовать **части фреймворка независимо**.
-
----
-
-## 4. Один код для realtime
-
-LPhenom предоставляет единый API для:
-
-- 🌐 WebSocket
-- 📡 Long polling
-
-Это позволяет писать **один бизнес-код**, который работает в обоих режимах.
-
----
-
-## 5. Self-hosted friendly
-
-Фреймворк учитывает реальные ограничения окружения:
-
-- 🏠 shared hosting
-- 🔒 отсутствие root доступа
-- 🧓 старые версии MySQL
-
----
-
-# TL;DR
-
-**LPhenom = PHP сейчас + KPHP потом.**
-
-Вы пишете обычное PHP-приложение, которое при необходимости можно **скомпилировать в высокопроизводительный сервер**.
+MIT — see [LICENSE](LICENSE)

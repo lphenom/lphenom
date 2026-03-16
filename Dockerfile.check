@@ -1,0 +1,83 @@
+# =============================================================================
+# Dockerfile.check — KPHP binary build + PHAR build verification
+#
+# Usage:
+#   docker build -f Dockerfile.check -t lphenom-check .
+#
+# Both build stages must succeed (exit 0) for the check to pass.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage 1: KPHP binary build
+# -----------------------------------------------------------------------------
+FROM vkcom/kphp:latest AS kphp-build
+
+RUN apt-get update -qq \
+    && apt-get install -y --no-install-recommends wget ca-certificates \
+    && wget -q --timeout=10 -O /etc/apt/trusted.gpg.d/vkpartner.asc \
+         https://artifactory-external.vkpartner.ru/artifactory/api/gpg/key/public \
+    && echo "deb [arch=amd64] https://artifactory-external.vkpartner.ru/artifactory/kphp focal main" \
+         > /etc/apt/sources.list.d/vkpartner.list \
+    && apt-get update -qq \
+    && apt-get install -y --no-install-recommends php8.1-vkext \
+    && echo "=== php8.1-vkext installed ===" \
+    || echo "=== php8.1-vkext SKIPPED ===" \
+    ; rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+COPY src/    ./src/
+COPY build/  ./build/
+
+# Install Composer for dependency resolution
+COPY --from=composer:2.7.9 /usr/bin/composer /usr/bin/composer
+COPY composer.json ./composer.json
+
+RUN composer install --no-dev --no-progress --prefer-dist --optimize-autoloader --no-interaction 2>/dev/null || true
+
+RUN kphp \
+        -d /build/kphp-out \
+        -M cli \
+        /build/build/kphp-entrypoint.php \
+    && echo "=== KPHP compilation: OK ===" \
+    && ls -lh /build/kphp-out/
+
+RUN useradd -m kphp-runner \
+    && su kphp-runner -c '/build/kphp-out/cli' \
+    && echo "=== KPHP binary run: OK ==="
+
+# -----------------------------------------------------------------------------
+# Stage 2: PHAR build
+# -----------------------------------------------------------------------------
+FROM php:8.1.31-cli AS phar-build
+
+WORKDIR /build
+
+RUN echo "phar.readonly = Off" > /usr/local/etc/php/conf.d/phar.ini
+
+COPY --from=composer:2.7.9 /usr/bin/composer /usr/bin/composer
+
+COPY src/          ./src/
+COPY build/        ./build/
+COPY bin/          ./bin/
+COPY composer.json ./composer.json
+
+RUN composer install \
+        --no-dev \
+        --no-progress \
+        --prefer-dist \
+        --optimize-autoloader \
+        --no-interaction
+
+RUN php -d phar.readonly=0 /build/build/build-phar.php
+
+RUN php /build/build/smoke-test-phar.php /build/build/lphenom.phar \
+    && echo "=== PHAR build: OK ==="
+
+# -----------------------------------------------------------------------------
+# Final stage
+# -----------------------------------------------------------------------------
+FROM scratch AS check-complete
+COPY --from=kphp-build /build/kphp-out/cli        /kphp-cli-binary
+COPY --from=phar-build /build/build/lphenom.phar   /lphenom.phar
+
