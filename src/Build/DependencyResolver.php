@@ -10,7 +10,9 @@ namespace LPhenom\LPhenom\Build;
  * Uses PSR-4 namespace→directory mapping (read from Composer autoload_psr4.php)
  * to resolve FQCN → file path. Performs topological sort for require_once order.
  *
- * KPHP-compatible: no Reflection, no dynamic class loading.
+ * Build-time tool only — not included in KPHP or PHAR binaries.
+ *
+ * @lphenom-build none
  */
 final class DependencyResolver
 {
@@ -98,7 +100,13 @@ final class DependencyResolver
     /**
      * Parse use statements from a PHP file.
      *
-     * @return string[] FQCNs referenced by use statements
+     * Detects dependencies from:
+     *   - use statements (use Foo\Bar\Baz;)
+     *   - extends / implements (fully-qualified and same-namespace short names)
+     *   - method parameter type hints (e.g. Router $router)
+     *   - method return type hints (e.g. ): Router
+     *
+     * @return string[] FQCNs referenced by the file
      */
     public function parseUseStatements(string $filePath): array
     {
@@ -110,41 +118,111 @@ final class DependencyResolver
         /** @var string[] $uses */
         $uses = [];
 
+        // Parse namespace context
+        $nsMatch = [];
+        preg_match('/^\s*namespace\s+([\w\\\\]+)\s*;/m', $content, $nsMatch);
+        $namespace = $nsMatch[1] ?? '';
+
+        // Build import map: short name → FQCN (from use statements)
+        /** @var array<string, string> $importMap */
+        $importMap = [];
+
         // Match: use Foo\Bar\Baz;
         // Match: use Foo\Bar\Baz as Alias;
         $matches = [];
-        preg_match_all('/^\s*use\s+([\w\\\\]+)(?:\s+as\s+\w+)?\s*;/m', $content, $matches);
+        preg_match_all('/^\s*use\s+([\w\\\\]+)(?:\s+as\s+(\w+))?\s*;/m', $content, $matches);
         if (isset($matches[1])) {
-            foreach ($matches[1] as $use) {
-                // Skip PHP built-in and non-LPhenom classes for dependency resolution
+            foreach ($matches[1] as $idx => $use) {
                 if (strpos($use, 'LPhenom\\') === 0) {
                     $uses[] = $use;
                 }
+                // Build import map for short name resolution
+                $alias = (!empty($matches[2][$idx])) ? $matches[2][$idx] : '';
+                if ($alias === '') {
+                    $parts = explode('\\', $use);
+                    $alias = $parts[count($parts) - 1];
+                }
+                $importMap[$alias] = $use;
             }
         }
 
+        // Helper: resolve a short or qualified class name to FQCN
+        $resolveClassName = static function (string $name) use ($namespace, $importMap): string {
+            $name = trim($name);
+            // Already a FQCN with backslash
+            if (strpos($name, '\\') !== false) {
+                return ltrim($name, '\\');
+            }
+            // Check import map first
+            if (isset($importMap[$name])) {
+                return $importMap[$name];
+            }
+            // Same namespace
+            if ($namespace !== '') {
+                return $namespace . '\\' . $name;
+            }
+            return $name;
+        };
+
+        /**
+         * Try to add a resolved FQCN to uses list.
+         *
+         * @param string $name
+         */
+        $addResolved = static function (string $name) use (&$uses, $resolveClassName): void {
+            $fqcn = $resolveClassName($name);
+            if (strpos($fqcn, 'LPhenom\\') === 0 && !in_array($fqcn, $uses, true)) {
+                $uses[] = $fqcn;
+            }
+        };
+
         // Match: extends ClassName and implements InterfaceName
-        // These are usually already captured by use statements, but just in case
-        // someone uses fully-qualified names inline
         $matches2 = [];
         preg_match_all('/(?:extends|implements)\s+([\w\\\\]+(?:\s*,\s*[\w\\\\]+)*)/m', $content, $matches2);
         if (isset($matches2[1])) {
-            // Parse the namespace context
-            $nsMatch = [];
-            preg_match('/^\s*namespace\s+([\w\\\\]+)\s*;/m', $content, $nsMatch);
-            $namespace = $nsMatch[1] ?? '';
-
             foreach ($matches2[1] as $group) {
                 $items = explode(',', $group);
                 foreach ($items as $item) {
                     $item = trim($item);
-                    // If it's a FQCN
-                    if (strpos($item, '\\') !== false && strpos($item, 'LPhenom\\') === 0) {
-                        if (!in_array($item, $uses, true)) {
-                            $uses[] = $item;
-                        }
+                    if ($item !== '') {
+                        $addResolved($item);
                     }
                 }
+            }
+        }
+
+        // Match type hints in method parameters: (TypeName $var, ?TypeName $var)
+        $matches3 = [];
+        preg_match_all('/(?:^|\(|,)\s*\??([\w\\\\]+)\s+\$/m', $content, $matches3);
+        if (isset($matches3[1])) {
+            foreach ($matches3[1] as $typeHint) {
+                $typeHint = trim($typeHint);
+                // Skip PHP built-in types
+                if (in_array(strtolower($typeHint), [
+                    'string', 'int', 'float', 'bool', 'array', 'object',
+                    'callable', 'void', 'null', 'mixed', 'self', 'static',
+                    'parent', 'never', 'true', 'false', 'iterable',
+                ], true)) {
+                    continue;
+                }
+                $addResolved($typeHint);
+            }
+        }
+
+        // Match return type hints: ): TypeName or ): ?TypeName
+        $matches4 = [];
+        preg_match_all('/\)\s*:\s*\??([\w\\\\]+)/m', $content, $matches4);
+        if (isset($matches4[1])) {
+            foreach ($matches4[1] as $typeHint) {
+                $typeHint = trim($typeHint);
+                if (in_array(strtolower($typeHint), [
+                    'string', 'int', 'float', 'bool', 'array', 'object',
+                    'callable', 'void', 'null', 'mixed', 'self', 'static',
+                    'parent', 'never', 'true', 'false', 'iterable',
+                ], true)) {
+                    continue;
+                }
+                $addResolved($typeHint);
             }
         }
 
@@ -257,4 +335,3 @@ final class DependencyResolver
         return $sorted;
     }
 }
-

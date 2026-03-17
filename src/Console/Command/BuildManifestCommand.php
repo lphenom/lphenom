@@ -13,6 +13,10 @@ use LPhenom\LPhenom\Console\CommandInterface;
  * Display the build manifest — shows all files, their @lphenom-build annotations,
  * and which targets (shared/kphp) they are included in.
  *
+ * Build-time tool only — not included in KPHP or PHAR binaries.
+ *
+ * @lphenom-build none
+ *
  * Usage:
  *   lphenom build:manifest
  *   lphenom build:manifest --target=kphp
@@ -158,4 +162,3 @@ final class BuildManifestCommand implements CommandInterface
         return $file;
     }
 }
-

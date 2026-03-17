@@ -10,6 +10,11 @@ use LPhenom\LPhenom\Console\CommandInterface;
 /**
  * Start the PHP built-in development server.
  *
+ * PHP-only: uses passthru() to run PHP's built-in server.
+ * Not available in KPHP binary.
+ *
+ * @lphenom-build shared
+ *
  * Usage:
  *   lphenom serve               # default 0.0.0.0:8080
  *   lphenom serve --port=9000   # custom port

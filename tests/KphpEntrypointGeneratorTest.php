@@ -212,15 +212,15 @@ final class KphpEntrypointGeneratorTest extends TestCase
         self::assertNotContains('TestCase.php', $fileNames);
         self::assertNotContains('phpunit', $fileNames);
 
-        // All files should be from src/ or vendor/lphenom/
+        // All files should be from src/, vendor/lphenom/, or database/migrations/
         foreach ($files as $file) {
             $inSrc = strpos($file, $this->basePath . '/src/') === 0;
             $inLphenomVendor = strpos($file, $this->basePath . '/vendor/lphenom/') === 0;
+            $inMigrations = strpos($file, $this->basePath . '/database/migrations/') === 0;
             self::assertTrue(
-                $inSrc || $inLphenomVendor,
+                $inSrc || $inLphenomVendor || $inMigrations,
                 "Unexpected file in kphp build: {$file}"
             );
         }
     }
 }
-

@@ -6,8 +6,31 @@
 # Usage:
 #   docker build -f Dockerfile.check -t lphenom-check .
 #
-# Both build stages must succeed (exit 0) for the check to pass.
+# All build stages must succeed (exit 0) for the check to pass.
 # =============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage 0: Generate KPHP entrypoint + compatibility checks (needs PHP 8.1)
+# -----------------------------------------------------------------------------
+FROM php:8.1-cli AS entrypoint-gen
+
+WORKDIR /build
+
+COPY composer.json ./composer.json
+COPY src/     ./src/
+COPY build/   ./build/
+COPY vendor/  ./vendor/
+# Copy migrations if they exist (optional — not all projects have them)
+COPY database/ ./database/
+
+# Check KPHP syntax compatibility of all lphenom/* packages
+RUN php /build/build/check-kphp-compat.php \
+    && echo "=== KPHP compat check: OK ==="
+
+# Generate the entrypoint (dependency-ordered require_once list)
+RUN php /build/build/generate-kphp-entrypoint.php \
+    && echo "=== Entrypoint generated ===" \
+    && cat /build/build/kphp-entrypoint.generated.php
 
 # -----------------------------------------------------------------------------
 # Stage 1: KPHP binary build
@@ -28,15 +51,18 @@ RUN apt-get update -qq \
 
 WORKDIR /build
 
-# Copy source + vendor (pre-installed from host via composer install)
+# Copy source + vendor + migrations
 COPY src/     ./src/
-COPY build/   ./build/
 COPY vendor/  ./vendor/
+COPY database/ ./database/
+
+# Copy the generated entrypoint from Stage 0
+COPY --from=entrypoint-gen /build/build/kphp-entrypoint.generated.php ./build/kphp-entrypoint.generated.php
 
 RUN kphp \
         -d /build/kphp-out \
         -M cli \
-        /build/build/kphp-entrypoint.php \
+        /build/build/kphp-entrypoint.generated.php \
     && echo "=== KPHP compilation: OK ===" \
     && ls -lh /build/kphp-out/
 

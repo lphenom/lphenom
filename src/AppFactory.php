@@ -8,10 +8,12 @@ use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
 use LPhenom\Core\EnvLoader\EnvLoader;
 use LPhenom\Db\Migration\MigrationInterface;
+use LPhenom\LPhenom\Build\MigrationLoader;
 use LPhenom\LPhenom\Provider\CacheServiceProvider;
 use LPhenom\LPhenom\Provider\DatabaseServiceProvider;
 use LPhenom\LPhenom\Provider\HttpServiceProvider;
 use LPhenom\LPhenom\Provider\LogServiceProvider;
+use LPhenom\LPhenom\Provider\MediaServiceProvider;
 use LPhenom\LPhenom\Provider\MigrateServiceProvider;
 use LPhenom\LPhenom\Provider\QueueServiceProvider;
 use LPhenom\LPhenom\Provider\RealtimeServiceProvider;
@@ -19,11 +21,16 @@ use LPhenom\LPhenom\Provider\RedisServiceProvider;
 use LPhenom\LPhenom\Provider\StorageServiceProvider;
 
 /**
- * Application factory — builds a fully wired Application.
+ * Application factory — builds a fully wired Application for PHP runtime.
  *
- * Provides static helpers for web and console bootstrap.
+ * Uses providers that leverage PHP extensions for best performance:
+ *   - DatabaseServiceProvider  (ext-pdo_mysql via ConnectionFactory)
+ *   - RedisServiceProvider     (ext-redis via RedisConnector)
+ *   - MediaServiceProvider     (ext-gd via GdImageProcessor when available)
  *
- * KPHP-compatible: no reflection, no dynamic class loading.
+ * @see KphpAppFactory for the KPHP-compatible variant (FFI MySQL, RESP Redis, CLI media)
+ *
+ * @lphenom-build shared
  */
 final class AppFactory
 {
@@ -33,6 +40,9 @@ final class AppFactory
 
     /**
      * Create a web application with all providers.
+     *
+     * Migrations from database/migrations/ are auto-discovered and merged
+     * with any extra $userMigrations passed by the caller.
      *
      * @param string               $basePath        Root directory of the application
      * @param Config               $config          Application configuration
@@ -48,15 +58,18 @@ final class AppFactory
         $container = new Container();
         $app       = new Application($container, $config, $basePath);
 
+        $allMigrations = self::loadMigrations($basePath, $userMigrations);
+
         // Register core providers in dependency order
         $app->addProvider(new LogServiceProvider());
         $app->addProvider(new DatabaseServiceProvider());
         $app->addProvider(new RedisServiceProvider());
         $app->addProvider(new CacheServiceProvider());
         $app->addProvider(new StorageServiceProvider());
+        $app->addProvider(new MediaServiceProvider());
         $app->addProvider(new QueueServiceProvider());
         $app->addProvider(new RealtimeServiceProvider());
-        $app->addProvider(new MigrateServiceProvider($userMigrations));
+        $app->addProvider(new MigrateServiceProvider($allMigrations));
         $app->addProvider(new HttpServiceProvider());
 
         // Register user-provided extra providers
@@ -86,14 +99,17 @@ final class AppFactory
         $container = new Container();
         $app       = new Application($container, $config, $basePath);
 
+        $allMigrations = self::loadMigrations($basePath, $userMigrations);
+
         $app->addProvider(new LogServiceProvider());
         $app->addProvider(new DatabaseServiceProvider());
         $app->addProvider(new RedisServiceProvider());
         $app->addProvider(new CacheServiceProvider());
         $app->addProvider(new StorageServiceProvider());
+        $app->addProvider(new MediaServiceProvider());
         $app->addProvider(new QueueServiceProvider());
         $app->addProvider(new RealtimeServiceProvider());
-        $app->addProvider(new MigrateServiceProvider($userMigrations));
+        $app->addProvider(new MigrateServiceProvider($allMigrations));
 
         foreach ($extraProviders as $provider) {
             $app->addProvider($provider);
@@ -130,6 +146,7 @@ final class AppFactory
             'queue',
             'realtime',
             'storage',
+            'media',
             'log'
         ];
 
@@ -145,5 +162,24 @@ final class AppFactory
         }
 
         return new Config($merged);
+    }
+
+    /**
+     * Auto-discover migrations from database/migrations/ and merge with extras.
+     *
+     * Uses MigrationLoader to scan the directory, require each PHP file,
+     * instantiate the migration class by naming convention, and return
+     * MigrationInterface[] instances.
+     *
+     * @param string               $basePath
+     * @param MigrationInterface[] $extraMigrations
+     * @return MigrationInterface[]
+     */
+    private static function loadMigrations(string $basePath, array $extraMigrations): array
+    {
+        $loader     = new MigrationLoader($basePath . '/database/migrations');
+        $discovered = $loader->loadAll();
+
+        return array_merge($discovered, $extraMigrations);
     }
 }

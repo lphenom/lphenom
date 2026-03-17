@@ -12,7 +12,9 @@ namespace LPhenom\LPhenom\Build;
  *
  * The output file is a temporary build artifact (gitignored).
  *
- * KPHP-compatible: no Reflection, no dynamic class loading.
+ * Build-time tool only — not included in KPHP or PHAR binaries.
+ *
+ * @lphenom-build none
  */
 final class KphpEntrypointGenerator
 {
@@ -25,22 +27,33 @@ final class KphpEntrypointGenerator
     /** @var string */
     private string $basePath;
 
-    public function __construct(string $basePath, BuildAnnotationScanner $scanner, DependencyResolver $resolver)
-    {
+    /** @var MigrationFileScanner */
+    private MigrationFileScanner $migrationScanner;
+
+    public function __construct(
+        string $basePath,
+        BuildAnnotationScanner $scanner,
+        DependencyResolver $resolver,
+        MigrationFileScanner $migrationScanner
+    ) {
         $this->basePath = $basePath;
         $this->scanner  = $scanner;
         $this->resolver = $resolver;
+        $this->migrationScanner = $migrationScanner;
     }
 
     /**
      * Create a generator with default configuration.
+     *
+     * Scans database/migrations/ for user migration files by default.
      */
     public static function createDefault(string $basePath): self
     {
         return new self(
             $basePath,
             BuildAnnotationScanner::createDefault($basePath),
-            DependencyResolver::createFromComposer($basePath)
+            DependencyResolver::createFromComposer($basePath),
+            new MigrationFileScanner($basePath . '/database/migrations')
         );
     }
 
@@ -53,7 +66,12 @@ final class KphpEntrypointGenerator
     public function generate(string $outputPath): int
     {
         $files  = $this->scanner->scanForTarget('kphp');
-        $sorted = $this->resolver->topologicalSort($files);
+
+        // Add migration files to the dependency resolver input
+        $migrationFiles = $this->migrationScanner->scan();
+        $allFiles = array_merge($files, $migrationFiles);
+
+        $sorted = $this->resolver->topologicalSort($allFiles);
 
         $content = $this->renderEntrypoint($sorted);
 
@@ -75,7 +93,9 @@ final class KphpEntrypointGenerator
     public function getKphpFiles(): array
     {
         $files = $this->scanner->scanForTarget('kphp');
-        return $this->resolver->topologicalSort($files);
+        $migrationFiles = $this->migrationScanner->scan();
+        $allFiles = array_merge($files, $migrationFiles);
+        return $this->resolver->topologicalSort($allFiles);
     }
 
     /**
@@ -101,25 +121,29 @@ final class KphpEntrypointGenerator
         $lines[] = 'declare(strict_types=1);';
         $lines[] = '';
 
-        // Group files by package for readability
-        $groups = $this->groupByPackage($sortedFiles);
-
-        foreach ($groups as $package => $files) {
-            $lines[] = '// === ' . $package . ' ===';
-            foreach ($files as $file) {
-                $relative = $this->makeRelativePath($file);
-                $lines[] = "require_once __DIR__ . '/" . $relative . "';";
+        // Emit files in topological order, inserting package headers when package changes
+        $lastPackage = '';
+        foreach ($sortedFiles as $file) {
+            $package = $this->detectPackage($file);
+            if ($package !== $lastPackage) {
+                if ($lastPackage !== '') {
+                    $lines[] = '';
+                }
+                $lines[] = '// === ' . $package . ' ===';
+                $lastPackage = $package;
             }
-            $lines[] = '';
+            $relative = $this->makeRelativePath($file);
+            $lines[] = "require_once __DIR__ . '/" . $relative . "';";
         }
+        $lines[] = '';
 
         // Smoke test
         $lines[] = '// === Smoke test ===';
-        $lines[] = "\$config = new \\LPhenom\\Core\\Config\\Config([";
+        $lines[] = '$config = new \\LPhenom\\Core\\Config\\Config([';
         $lines[] = "    'app' => ['name' => 'lphenom']";
         $lines[] = ']);';
         $lines[] = '';
-        $lines[] = "\$container = new \\LPhenom\\Core\\Container\\Container();";
+        $lines[] = '$container = new \\LPhenom\\Core\\Container\\Container();';
         $lines[] = "\$app = new \\LPhenom\\LPhenom\\Application(\$container, \$config, '/tmp');";
         $lines[] = '';
         $lines[] = "echo 'LPhenom kernel KPHP smoke test: OK' . PHP_EOL;";
@@ -128,27 +152,6 @@ final class KphpEntrypointGenerator
         return implode("\n", $lines);
     }
 
-    /**
-     * Group files by their package name for organized output.
-     *
-     * @param string[] $files
-     * @return array<string, string[]>
-     */
-    private function groupByPackage(array $files): array
-    {
-        /** @var array<string, string[]> $groups */
-        $groups = [];
-
-        foreach ($files as $file) {
-            $package = $this->detectPackage($file);
-            if (!isset($groups[$package])) {
-                $groups[$package] = [];
-            }
-            $groups[$package][] = $file;
-        }
-
-        return $groups;
-    }
 
     /**
      * Detect which package a file belongs to.
@@ -171,6 +174,12 @@ final class KphpEntrypointGenerator
             return 'lphenom/lphenom (kernel)';
         }
 
+        // Check if it's in database/migrations/
+        $migrationsPrefix = $this->basePath . '/database/migrations';
+        if (strpos($file, $migrationsPrefix) === 0) {
+            return 'User migrations';
+        }
+
         return 'unknown';
     }
 
@@ -191,4 +200,3 @@ final class KphpEntrypointGenerator
         return $file;
     }
 }
-

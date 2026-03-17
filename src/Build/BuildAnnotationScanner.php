@@ -9,12 +9,16 @@ namespace LPhenom\LPhenom\Build;
  *
  * Reads file content as plain text (no Reflection) — KPHP-compatible.
  *
+ * Build-time tool only — not included in KPHP or PHAR binaries.
+ *
  * Annotation rules:
  *   - No annotation found      → file builds EVERYWHERE (all targets)
  *   - @lphenom-build shared,kphp → builds for shared + kphp
  *   - @lphenom-build shared      → builds only for shared (PHAR)
  *   - @lphenom-build kphp        → builds only for kphp binary
  *   - @lphenom-build none        → never builds
+ *
+ * @lphenom-build none
  */
 final class BuildAnnotationScanner
 {
@@ -162,7 +166,7 @@ final class BuildAnnotationScanner
             //   Single-line: /** @lphenom-build shared,kphp */
             // Does NOT match prose: * This mentions @lphenom-build in text
             $tagMatches = [];
-            if (preg_match('/^\s*(?:\/\*)?\*+\s*@lphenom-build\s+([\w,]+)/m', $docblock, $tagMatches)) {
+            if (preg_match('/^\s*(?:\/\*)?\*+\s*@lphenom-build\s+([\w, ]+)/m', $docblock, $tagMatches)) {
                 $value = trim($tagMatches[1]);
                 return $this->parseTargetValue($value);
             }
@@ -223,4 +227,3 @@ final class BuildAnnotationScanner
         }
     }
 }
-

@@ -21,6 +21,13 @@ use LPhenom\LPhenom\ServiceProviderInterface;
  *   database.dbname   — string
  *   database.user     — string
  *   database.password — string
+ *
+ * PHP-only: uses ConnectionFactory which internally references PdoMySqlConnection
+ * (requires ext-pdo_mysql) — not available in KPHP.
+ *
+ * @see FfiDatabaseServiceProvider for the KPHP-compatible variant (FFI MySQL)
+ *
+ * @lphenom-build shared
  */
 final class DatabaseServiceProvider implements ServiceProviderInterface
 {

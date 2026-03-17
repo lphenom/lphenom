@@ -10,7 +10,9 @@ namespace LPhenom\LPhenom\Build;
  *
  * Used by PHAR and KPHP builders to exclude dev packages (phpunit, phpstan, etc.).
  *
- * KPHP-compatible: no Reflection.
+ * Build-time tool only — not included in KPHP or PHAR binaries.
+ *
+ * @lphenom-build none
  */
 final class DevPackageFilter
 {
@@ -135,4 +137,3 @@ final class DevPackageFilter
         return array_keys($this->prodPaths);
     }
 }
-

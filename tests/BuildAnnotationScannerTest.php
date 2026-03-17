@@ -24,7 +24,9 @@ final class BuildAnnotationScannerTest extends TestCase
 
     public function testNoAnnotationReturnsAll(): void
     {
-        $file = $this->createPhpFile('NoAnnotation.php', <<<'PHP'
+        $file = $this->createPhpFile(
+            'NoAnnotation.php',
+            <<<'PHP'
 <?php
 
 declare(strict_types=1);
@@ -46,7 +48,9 @@ PHP
 
     public function testSharedKphpAnnotation(): void
     {
-        $file = $this->createPhpFile('SharedKphp.php', <<<'PHP'
+        $file = $this->createPhpFile(
+            'SharedKphp.php',
+            <<<'PHP'
 <?php
 
 declare(strict_types=1);
@@ -68,7 +72,9 @@ PHP
 
     public function testSharedOnlyAnnotation(): void
     {
-        $file = $this->createPhpFile('SharedOnly.php', <<<'PHP'
+        $file = $this->createPhpFile(
+            'SharedOnly.php',
+            <<<'PHP'
 <?php
 
 declare(strict_types=1);
@@ -90,7 +96,9 @@ PHP
 
     public function testKphpOnlyAnnotation(): void
     {
-        $file = $this->createPhpFile('KphpOnly.php', <<<'PHP'
+        $file = $this->createPhpFile(
+            'KphpOnly.php',
+            <<<'PHP'
 <?php
 
 declare(strict_types=1);
@@ -112,7 +120,9 @@ PHP
 
     public function testNoneAnnotationReturnsEmpty(): void
     {
-        $file = $this->createPhpFile('NoneTarget.php', <<<'PHP'
+        $file = $this->createPhpFile(
+            'NoneTarget.php',
+            <<<'PHP'
 <?php
 
 declare(strict_types=1);
@@ -135,7 +145,9 @@ PHP
     public function testAnnotationInProseTextIsIgnored(): void
     {
         // This mimics BuildManifestCommand — mentions @lphenom-build in description text
-        $file = $this->createPhpFile('ProseText.php', <<<'PHP'
+        $file = $this->createPhpFile(
+            'ProseText.php',
+            <<<'PHP'
 <?php
 
 declare(strict_types=1);
@@ -160,7 +172,9 @@ PHP
 
     public function testAnnotationInStringLiteralIsIgnored(): void
     {
-        $file = $this->createPhpFile('StringLiteral.php', <<<'PHP'
+        $file = $this->createPhpFile(
+            'StringLiteral.php',
+            <<<'PHP'
 <?php
 
 declare(strict_types=1);
@@ -185,7 +199,9 @@ PHP
     public function testFileLevelDocblock(): void
     {
         // Some files have @lphenom-build in the file-level docblock before declare
-        $file = $this->createPhpFile('FileLevel.php', <<<'PHP'
+        $file = $this->createPhpFile(
+            'FileLevel.php',
+            <<<'PHP'
 <?php
 
 /**
@@ -210,25 +226,33 @@ PHP
 
     public function testScanForTargetKphp(): void
     {
-        $this->createPhpFile('A.php', <<<'PHP'
+        $this->createPhpFile(
+            'A.php',
+            <<<'PHP'
 <?php
 /** @lphenom-build shared,kphp */
 final class A {}
 PHP
         );
-        $this->createPhpFile('B.php', <<<'PHP'
+        $this->createPhpFile(
+            'B.php',
+            <<<'PHP'
 <?php
 /** @lphenom-build shared */
 final class B {}
 PHP
         );
-        $this->createPhpFile('C.php', <<<'PHP'
+        $this->createPhpFile(
+            'C.php',
+            <<<'PHP'
 <?php
 /** @lphenom-build none */
 final class C {}
 PHP
         );
-        $this->createPhpFile('D.php', <<<'PHP'
+        $this->createPhpFile(
+            'D.php',
+            <<<'PHP'
 <?php
 /** No annotation */
 final class D {}
@@ -248,25 +272,33 @@ PHP
 
     public function testScanForTargetShared(): void
     {
-        $this->createPhpFile('A.php', <<<'PHP'
+        $this->createPhpFile(
+            'A.php',
+            <<<'PHP'
 <?php
 /** @lphenom-build shared,kphp */
 final class A {}
 PHP
         );
-        $this->createPhpFile('B.php', <<<'PHP'
+        $this->createPhpFile(
+            'B.php',
+            <<<'PHP'
 <?php
 /** @lphenom-build shared */
 final class B {}
 PHP
         );
-        $this->createPhpFile('C.php', <<<'PHP'
+        $this->createPhpFile(
+            'C.php',
+            <<<'PHP'
 <?php
 /** @lphenom-build none */
 final class C {}
 PHP
         );
-        $this->createPhpFile('D.php', <<<'PHP'
+        $this->createPhpFile(
+            'D.php',
+            <<<'PHP'
 <?php
 /** No annotation */
 final class D {}
@@ -307,7 +339,9 @@ PHP
 
     public function testInvalidTargetValueIgnored(): void
     {
-        $file = $this->createPhpFile('Invalid.php', <<<'PHP'
+        $file = $this->createPhpFile(
+            'Invalid.php',
+            <<<'PHP'
 <?php
 
 /**
@@ -356,4 +390,3 @@ PHP
         rmdir($dir);
     }
 }
-

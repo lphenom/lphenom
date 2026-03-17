@@ -10,6 +10,10 @@ use LPhenom\LPhenom\Console\CommandInterface;
 /**
  * Build a PHAR archive for shared hosting deployment.
  *
+ * Build-time tool only — not included in KPHP or PHAR binaries.
+ *
+ * @lphenom-build none
+ *
  * Usage:
  *   lphenom build:phar
  *   lphenom build:phar --output=myapp.phar

@@ -20,6 +20,13 @@ use LPhenom\Redis\Connection\RedisConnector;
  *   redis.port     — int, default 6379
  *   redis.password — string, default ''
  *   redis.database — int, default 0
+ *
+ * PHP-only: uses RedisConnector which internally references PhpRedisClient
+ * (requires ext-redis) — not available in KPHP.
+ *
+ * @see RespRedisServiceProvider for the KPHP-compatible variant (RESP over TCP)
+ *
+ * @lphenom-build shared
  */
 final class RedisServiceProvider implements ServiceProviderInterface
 {

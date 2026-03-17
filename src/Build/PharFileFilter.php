@@ -17,7 +17,9 @@ namespace LPhenom\LPhenom\Build;
  *    - kphp              → EXCLUDE (kphp-only, not for PHP runtime)
  *    - none              → EXCLUDE (dev tools)
  *
- * KPHP-compatible: no Reflection.
+ * Build-time tool only — not included in KPHP or PHAR binaries.
+ *
+ * @lphenom-build none
  */
 final class PharFileFilter
 {

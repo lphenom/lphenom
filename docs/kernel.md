@@ -25,6 +25,9 @@ myapp/
 │   ├── realtime.php
 │   ├── storage.php
 │   └── log.php
+├── database/
+│   └── migrations/
+│       └── 20260313000001_create_users_table.php
 ├── public/
 │   └── index.php
 ├── build/
@@ -180,11 +183,27 @@ php bin/lphenom serve --port=9000
 
 ## Встроенные провайдеры
 
+### PHP-провайдеры (shared hosting)
+
+| Провайдер | Сервис | Драйвер | Конфиг |
+|---|---|---|---|
+| `DatabaseServiceProvider` | `ConnectionInterface` | ext-pdo_mysql | `database.*` |
+| `RedisServiceProvider` | `RedisClientInterface` | ext-redis | `redis.*` |
+| `MediaServiceProvider` | `ImageProcessorInterface`, `VideoProcessorInterface` | ext-gd + ffmpeg | `media.*` |
+
+### KPHP-совместимые провайдеры
+
+| Провайдер | Сервис | Драйвер | Конфиг |
+|---|---|---|---|
+| `FfiDatabaseServiceProvider` | `ConnectionInterface` | FFI + libmysqlclient | `database.*` |
+| `RespRedisServiceProvider` | `RedisClientInterface` | TCP/RESP протокол | `redis.*` |
+| `CliMediaServiceProvider` | `ImageProcessorInterface`, `VideoProcessorInterface` | ImageMagick CLI + ffmpeg | `media.*` |
+
+### Общие провайдеры (работают везде)
+
 | Провайдер | Сервис | Конфиг |
 |---|---|---|
 | `LogServiceProvider` | `LoggerInterface` | `log.*` |
-| `DatabaseServiceProvider` | `ConnectionInterface` | `database.*` |
-| `RedisServiceProvider` | `RedisClientInterface` | `redis.*` |
 | `CacheServiceProvider` | `CacheInterface` | `cache.*` |
 | `StorageServiceProvider` | `StorageInterface` | `storage.*` |
 | `QueueServiceProvider` | `QueueInterface`, `Worker` | `queue.*` |
@@ -194,12 +213,54 @@ php bin/lphenom serve --port=9000
 
 ## Миграции
 
-Ядро автоматически регистрирует миграции из подпакетов:
+### Автообнаружение
 
-- **realtime_events** — таблица для realtime событий (`lphenom/realtime`)
-- **jobs** — таблица очередей (`lphenom/queue`)
+`AppFactory` автоматически сканирует `database/migrations/` через `MigrationLoader`,
+загружает каждый PHP-файл и регистрирует классы в `MigrationRegistry`.
 
-Пользовательские миграции передаются через `AppFactory`:
+Файлы миграций следуют конвенции именования:
+
+```
+database/migrations/
+├── 20260313000001_create_realtime_events_table.php  → Migration20260313000001CreateRealtimeEventsTable
+├── 20260313000002_create_jobs_table.php              → Migration20260313000002CreateJobsTable
+└── 20260313000003_create_cache_table.php             → Migration20260313000003CreateCacheTable
+```
+
+Каждый класс реализует `MigrationInterface` и определяет `up()`, `down()`, `getVersion()`.
+
+### Добавление своих миграций
+
+Создайте файл в `database/migrations/` по конвенции:
+
+```php
+// database/migrations/20260318000001_create_users_table.php
+<?php
+declare(strict_types=1);
+
+use LPhenom\Db\Contract\ConnectionInterface;
+use LPhenom\Db\Migration\MigrationInterface;
+
+final class Migration20260318000001CreateUsersTable implements MigrationInterface
+{
+    public function up(ConnectionInterface $conn): void
+    {
+        $conn->execute('CREATE TABLE IF NOT EXISTS users (...)', []);
+    }
+
+    public function down(ConnectionInterface $conn): void
+    {
+        $conn->execute('DROP TABLE IF EXISTS users', []);
+    }
+
+    public function getVersion(): string
+    {
+        return '20260318000001';
+    }
+}
+```
+
+Дополнительные миграции (не из директории) можно передать через `AppFactory`:
 
 ```php
 $app = AppFactory::create($basePath, $config, [
@@ -207,6 +268,23 @@ $app = AppFactory::create($basePath, $config, [
     new CreatePostsTable(),
 ]);
 ```
+
+### KPHP-режим
+
+В KPHP динамическая загрузка файлов невозможна. `MigrationLoader` помечен
+`@lphenom-build none` и не входит в KPHP-сборку. Миграции передаются
+явно через `KphpAppFactory`:
+
+```php
+$app = KphpAppFactory::create($basePath, $config, [
+    new Migration20260313000001CreateRealtimeEventsTable(),
+    new Migration20260313000002CreateJobsTable(),
+    new Migration20260313000003CreateCacheTable(),
+]);
+```
+
+Файлы миграций подключаются в KPHP-энтрипоинт статически через
+`MigrationFileScanner` на этапе сборки (подробнее: [docs/build.md](build.md)).
 
 ## KPHP-совместимость
 
@@ -218,4 +296,21 @@ $app = AppFactory::create($basePath, $config, [
 - Нет match expressions
 - Нет str_starts_with/str_ends_with/str_contains
 - `declare(strict_types=1)` в каждом файле
+
+### Две фабрики приложения
+
+```php
+// PHP runtime (shared hosting, ext-pdo_mysql + ext-redis + ext-gd)
+$app = AppFactory::create($basePath, $config);
+
+// KPHP binary (или PHP без расширений)
+use LPhenom\LPhenom\KphpAppFactory;
+$app = KphpAppFactory::create($basePath, $config);
+```
+
+`KphpAppFactory` использует KPHP-совместимые провайдеры:
+FFI MySQL, RESP Redis, ImageMagick CLI.
+
+> Подробнее: [docs/build.md](build.md) — аннотации `@lphenom-build`,
+> резолвер зависимостей, порядок файлов, конвейер сборки.
 

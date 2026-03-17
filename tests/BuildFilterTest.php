@@ -6,7 +6,6 @@ namespace LPhenom\LPhenom\Tests;
 
 use LPhenom\LPhenom\Build\DevPackageFilter;
 use LPhenom\LPhenom\Build\PharFileFilter;
-use LPhenom\LPhenom\Build\BuildAnnotationScanner;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -137,4 +136,3 @@ final class BuildFilterTest extends TestCase
         self::assertTrue($filter->shouldInclude($appFile));
     }
 }
-
