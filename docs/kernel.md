@@ -161,6 +161,7 @@ $response = $kernel->handle($request);
 php bin/lphenom --help
 
 # Миграции
+php bin/lphenom make:migration create_users_table
 php bin/lphenom migrate
 php bin/lphenom migrate:rollback
 php bin/lphenom migrate:status
@@ -228,6 +229,17 @@ database/migrations/
 ```
 
 Каждый класс реализует `MigrationInterface` и определяет `up()`, `down()`, `getVersion()`.
+
+### Создание миграции
+
+```bash
+php bin/lphenom make:migration create_users_table
+# → Created migration: database/migrations/20260318000001_create_users_table.php
+```
+
+Команда генерирует файл с правильным именем класса, версией и шаблоном.
+Имя должно содержать только `[a-z0-9_]`. Порядковый номер автоинкрементируется
+в рамках дня.
 
 ### Добавление своих миграций
 

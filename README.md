@@ -31,6 +31,7 @@ $response->send();
 ## CLI Tool
 
 ```bash
+php bin/lphenom make:migration create_users_table  # Create migration file
 php bin/lphenom migrate          # Run migrations
 php bin/lphenom migrate:rollback # Rollback last batch
 php bin/lphenom migrate:status   # Show migration status
