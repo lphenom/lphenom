@@ -40,7 +40,7 @@ final class NoAnnotation
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $targets = $scanner->parseAnnotation($file);
 
         self::assertSame(['all'], $targets);
@@ -64,7 +64,7 @@ final class SharedKphp
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $targets = $scanner->parseAnnotation($file);
 
         self::assertSame(['shared', 'kphp'], $targets);
@@ -88,7 +88,7 @@ final class SharedOnly
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $targets = $scanner->parseAnnotation($file);
 
         self::assertSame(['shared'], $targets);
@@ -112,7 +112,7 @@ final class KphpOnly
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $targets = $scanner->parseAnnotation($file);
 
         self::assertSame(['kphp'], $targets);
@@ -136,7 +136,7 @@ final class NoneTarget
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $targets = $scanner->parseAnnotation($file);
 
         self::assertSame([], $targets);
@@ -163,7 +163,7 @@ final class ProseText
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $targets = $scanner->parseAnnotation($file);
 
         // Should NOT be detected as kphp-only, because the text is in prose
@@ -189,7 +189,7 @@ final class StringLiteral
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $targets = $scanner->parseAnnotation($file);
 
         // String literal — no docblock annotation — builds everywhere
@@ -218,7 +218,7 @@ interface FileLevel
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $targets = $scanner->parseAnnotation($file);
 
         self::assertSame(['shared', 'kphp'], $targets);
@@ -259,7 +259,7 @@ final class D {}
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $kphpFiles = $scanner->scanForTarget('kphp');
 
         $names = array_map('basename', $kphpFiles);
@@ -305,7 +305,7 @@ final class D {}
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $sharedFiles = $scanner->scanForTarget('shared');
 
         $names = array_map('basename', $sharedFiles);
@@ -318,7 +318,7 @@ PHP
 
     public function testMatchesTarget(): void
     {
-        $scanner = new BuildAnnotationScanner($this->tmpDir, []);
+        $scanner = new BuildAnnotationScanner([]);
 
         // all → matches everything
         self::assertTrue($scanner->matchesTarget(['all'], 'kphp'));
@@ -351,7 +351,7 @@ final class Invalid {}
 PHP
         );
 
-        $scanner = new BuildAnnotationScanner($this->tmpDir, [$this->tmpDir]);
+        $scanner = new BuildAnnotationScanner([$this->tmpDir]);
         $targets = $scanner->parseAnnotation($file);
 
         // 'banana' is not a valid target — treated as no valid annotation → all

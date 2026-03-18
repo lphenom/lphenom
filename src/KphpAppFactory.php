@@ -7,6 +7,7 @@ namespace LPhenom\LPhenom;
 use LPhenom\Core\Config\Config;
 use LPhenom\Core\Container\Container;
 use LPhenom\Db\Migration\MigrationInterface;
+use LPhenom\LPhenom\Provider\AuthServiceProvider;
 use LPhenom\LPhenom\Provider\CacheServiceProvider;
 use LPhenom\LPhenom\Provider\CliMediaServiceProvider;
 use LPhenom\LPhenom\Provider\FfiDatabaseServiceProvider;
@@ -61,6 +62,7 @@ final class KphpAppFactory
         $app->addProvider(new FfiDatabaseServiceProvider());
         $app->addProvider(new RespRedisServiceProvider());
         $app->addProvider(new CacheServiceProvider());
+        $app->addProvider(new AuthServiceProvider());
         $app->addProvider(new StorageServiceProvider());
         $app->addProvider(new CliMediaServiceProvider());
         $app->addProvider(new QueueServiceProvider());
@@ -99,6 +101,7 @@ final class KphpAppFactory
         $app->addProvider(new FfiDatabaseServiceProvider());
         $app->addProvider(new RespRedisServiceProvider());
         $app->addProvider(new CacheServiceProvider());
+        $app->addProvider(new AuthServiceProvider());
         $app->addProvider(new StorageServiceProvider());
         $app->addProvider(new CliMediaServiceProvider());
         $app->addProvider(new QueueServiceProvider());

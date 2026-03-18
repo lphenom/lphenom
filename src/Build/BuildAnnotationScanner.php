@@ -28,16 +28,11 @@ final class BuildAnnotationScanner
     /** @var string[] */
     private array $scanDirs;
 
-    /** @var string */
-    private string $basePath;
-
     /**
-     * @param string   $basePath  Project root
      * @param string[] $scanDirs  Absolute paths to scan
      */
-    public function __construct(string $basePath, array $scanDirs)
+    public function __construct(array $scanDirs)
     {
-        $this->basePath = $basePath;
         $this->scanDirs = $scanDirs;
     }
 
@@ -67,7 +62,7 @@ final class BuildAnnotationScanner
             }
         }
 
-        return new self($basePath, $dirs);
+        return new self($dirs);
     }
 
     /**

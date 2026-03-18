@@ -9,6 +9,7 @@ use LPhenom\Core\Container\Container;
 use LPhenom\Core\EnvLoader\EnvLoader;
 use LPhenom\Db\Migration\MigrationInterface;
 use LPhenom\LPhenom\Build\MigrationLoader;
+use LPhenom\LPhenom\Provider\AuthServiceProvider;
 use LPhenom\LPhenom\Provider\CacheServiceProvider;
 use LPhenom\LPhenom\Provider\DatabaseServiceProvider;
 use LPhenom\LPhenom\Provider\HttpServiceProvider;
@@ -65,6 +66,7 @@ final class AppFactory
         $app->addProvider(new DatabaseServiceProvider());
         $app->addProvider(new RedisServiceProvider());
         $app->addProvider(new CacheServiceProvider());
+        $app->addProvider(new AuthServiceProvider());
         $app->addProvider(new StorageServiceProvider());
         $app->addProvider(new MediaServiceProvider());
         $app->addProvider(new QueueServiceProvider());
@@ -105,6 +107,7 @@ final class AppFactory
         $app->addProvider(new DatabaseServiceProvider());
         $app->addProvider(new RedisServiceProvider());
         $app->addProvider(new CacheServiceProvider());
+        $app->addProvider(new AuthServiceProvider());
         $app->addProvider(new StorageServiceProvider());
         $app->addProvider(new MediaServiceProvider());
         $app->addProvider(new QueueServiceProvider());
@@ -140,6 +143,7 @@ final class AppFactory
         /** @var string[] $configFiles */
         $configFiles = [
             'app',
+            'auth',
             'database',
             'cache',
             'redis',

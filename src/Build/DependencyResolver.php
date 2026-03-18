@@ -16,9 +16,6 @@ namespace LPhenom\LPhenom\Build;
  */
 final class DependencyResolver
 {
-    /** @var string */
-    private string $basePath;
-
     /**
      * Namespace prefix → directory mapping.
      * Longer prefixes are checked first (most specific wins).
@@ -28,12 +25,10 @@ final class DependencyResolver
     private array $namespacePrefixes;
 
     /**
-     * @param string               $basePath
      * @param array<string, string> $namespacePrefixes namespace prefix => absolute directory path
      */
-    public function __construct(string $basePath, array $namespacePrefixes)
+    public function __construct(array $namespacePrefixes)
     {
-        $this->basePath = $basePath;
         $this->namespacePrefixes = $namespacePrefixes;
 
         // Sort by prefix length descending for most-specific-first matching
@@ -69,7 +64,7 @@ final class DependencyResolver
             }
         }
 
-        return new self($basePath, $prefixes);
+        return new self($prefixes);
     }
 
     /**
@@ -131,7 +126,7 @@ final class DependencyResolver
         // Match: use Foo\Bar\Baz as Alias;
         $matches = [];
         preg_match_all('/^\s*use\s+([\w\\\\]+)(?:\s+as\s+(\w+))?\s*;/m', $content, $matches);
-        if (isset($matches[1])) {
+        if (count($matches[1]) > 0) {
             foreach ($matches[1] as $idx => $use) {
                 if (strpos($use, 'LPhenom\\') === 0) {
                     $uses[] = $use;
@@ -179,7 +174,7 @@ final class DependencyResolver
         // Match: extends ClassName and implements InterfaceName
         $matches2 = [];
         preg_match_all('/(?:extends|implements)\s+([\w\\\\]+(?:\s*,\s*[\w\\\\]+)*)/m', $content, $matches2);
-        if (isset($matches2[1])) {
+        if (count($matches2[1]) > 0) {
             foreach ($matches2[1] as $group) {
                 $items = explode(',', $group);
                 foreach ($items as $item) {
@@ -194,7 +189,7 @@ final class DependencyResolver
         // Match type hints in method parameters: (TypeName $var, ?TypeName $var)
         $matches3 = [];
         preg_match_all('/(?:^|\(|,)\s*\??([\w\\\\]+)\s+\$/m', $content, $matches3);
-        if (isset($matches3[1])) {
+        if (count($matches3[1]) > 0) {
             foreach ($matches3[1] as $typeHint) {
                 $typeHint = trim($typeHint);
                 // Skip PHP built-in types
@@ -212,7 +207,7 @@ final class DependencyResolver
         // Match return type hints: ): TypeName or ): ?TypeName
         $matches4 = [];
         preg_match_all('/\)\s*:\s*\??([\w\\\\]+)/m', $content, $matches4);
-        if (isset($matches4[1])) {
+        if (count($matches4[1]) > 0) {
             foreach ($matches4[1] as $typeHint) {
                 $typeHint = trim($typeHint);
                 if (in_array(strtolower($typeHint), [
