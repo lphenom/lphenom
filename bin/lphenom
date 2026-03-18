@@ -38,6 +38,7 @@ use LPhenom\LPhenom\AppFactory;
 use LPhenom\LPhenom\Console\Command\BuildKphpCommand;
 use LPhenom\LPhenom\Console\Command\BuildManifestCommand;
 use LPhenom\LPhenom\Console\Command\BuildPharCommand;
+use LPhenom\LPhenom\Console\Command\MakeMigrationCommand;
 use LPhenom\LPhenom\Console\Command\MigrateCommand;
 use LPhenom\LPhenom\Console\Command\MigrateRollbackCommand;
 use LPhenom\LPhenom\Console\Command\MigrateStatusCommand;
@@ -62,6 +63,7 @@ $app = AppFactory::createForConsole($basePath, $config);
 $console = new ConsoleApplication($app);
 
 // Register built-in commands
+$console->add(new MakeMigrationCommand());
 $console->add(new MigrateCommand());
 $console->add(new MigrateRollbackCommand());
 $console->add(new MigrateStatusCommand());
