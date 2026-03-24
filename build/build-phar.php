@@ -5,11 +5,20 @@
  *
  * Packages src/ + vendor/ + bin/ + config/ into a self-contained PHAR archive.
  *
+ * Features:
+ *   - Gzip compression (when ext-zlib is available)
+ *   - Eval-obfuscation: PHP files are stripped of comments/whitespace,
+ *     compressed via gzdeflate, base64-encoded and wrapped in eval()
+ *
  * Filtering:
  *   1. Dev packages (require-dev) are completely excluded from the PHAR.
  *   2. @lphenom-build annotations filter LPhenom source files:
  *      - no annotation / shared,kphp / shared → included
  *      - kphp / none → excluded
+ *
+ * Environment:
+ *   LPHENOM_PHAR_OUTPUT  — custom output path (default: build/lphenom.phar)
+ *   LPHENOM_PHAR_OBFUSCATE — set to "0" to disable eval-obfuscation (default: enabled)
  *
  * Run with phar.readonly=0:
  *   php -d phar.readonly=0 build/build-phar.php
@@ -35,6 +44,15 @@ if (file_exists($pharFile)) {
 // Initialize filter (dev-package exclusion + annotation filtering)
 $filter = PharFileFilter::createDefault($buildDir);
 
+// Obfuscation: enabled by default, disable with LPHENOM_PHAR_OBFUSCATE=0
+$obfuscateEnabled = getenv('LPHENOM_PHAR_OBFUSCATE') !== '0';
+
+if ($obfuscateEnabled) {
+    echo 'Obfuscation: ENABLED (eval + gzdeflate + base64)' . PHP_EOL;
+} else {
+    echo 'Obfuscation: DISABLED' . PHP_EOL;
+}
+
 // Show what will be excluded
 $devPaths = $filter->getDevFilter()->getDevPaths();
 echo 'Dev packages excluded (' . count($devPaths) . '):' . PHP_EOL;
@@ -51,7 +69,92 @@ $skippedAnnotation = 0;
 $included          = 0;
 
 /**
- * Add directory contents to the PHAR with full filtering.
+ * Obfuscate a PHP source file: strip comments/whitespace,
+ * compress via gzdeflate, base64-encode and wrap in eval().
+ *
+ * declare(strict_types=1) is extracted and placed before eval()
+ * (PHP syntax requirement: it must be the first statement in a file).
+ *
+ * @param string $source Original PHP source code
+ * @return string Obfuscated PHP code, or original if compression fails
+ */
+function obfuscatePhp(string $source): string
+{
+    // Step 1: Strip comments and whitespace via php_strip_whitespace emulation
+    $tokens = token_get_all($source);
+    $stripped = '';
+    foreach ($tokens as $token) {
+        if (is_array($token)) {
+            [$type, $value] = $token;
+            switch ($type) {
+                case T_COMMENT:
+                case T_DOC_COMMENT:
+                    $stripped .= "\n";
+                    break;
+                case T_WHITESPACE:
+                    $stripped .= strpos($value, "\n") !== false ? "\n" : ' ';
+                    break;
+                case T_OPEN_TAG:
+                    $stripped .= '<?php ';
+                    break;
+                default:
+                    $stripped .= $value;
+                    break;
+            }
+        } else {
+            $stripped .= $token;
+        }
+    }
+
+    // Step 2: Compress whitespace — remove empty lines
+    $lines = explode("\n", $stripped);
+    $lines = array_filter($lines, function (string $line): bool {
+        return trim($line) !== '';
+    });
+    $compressed = implode("\n", $lines);
+
+    // Step 3: Extract declare(strict_types=1) — must be before eval()
+    $hasStrictTypes = false;
+    $codeBody = $compressed;
+    if (preg_match('/declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;/', $codeBody)) {
+        $hasStrictTypes = true;
+        $codeBody = (string) preg_replace(
+            '/declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;/',
+            '',
+            $codeBody
+        );
+    }
+
+    // Remove <?php tag from body (will be in wrapper)
+    $codeBody = (string) preg_replace('/<\?php\s*/', '', $codeBody);
+    $codeBody = trim($codeBody);
+
+    if ($codeBody === '') {
+        return $source;
+    }
+
+    // Step 4: gzdeflate + base64 + eval wrapper
+    $deflated = gzdeflate($codeBody, 9);
+    if ($deflated === false) {
+        return $source;
+    }
+
+    $encoded = base64_encode($deflated);
+    $chunked = chunk_split($encoded, 120, "'\n.'");
+    $chunked = rtrim($chunked, "\n.'");
+    $chunked = "'" . $chunked . "'";
+
+    $result = "<?php\n";
+    if ($hasStrictTypes) {
+        $result .= "declare(strict_types=1);\n";
+    }
+    $result .= "eval(gzinflate(base64_decode({$chunked})));\n";
+
+    return $result;
+}
+
+/**
+ * Add directory contents to the PHAR with full filtering and optional obfuscation.
  *
  * @param Phar           $phar
  * @param string         $base         Absolute path to the source directory
@@ -61,6 +164,7 @@ $included          = 0;
  * @param int            &$skippedDev        Skipped-by-dev counter
  * @param int            &$skippedAnnotation Skipped-by-annotation counter
  * @param bool           $applyFilter  Whether to apply filtering
+ * @param bool           $obfuscate    Whether to apply eval-obfuscation to PHP files
  */
 function addDirectory(
     Phar $phar,
@@ -70,7 +174,8 @@ function addDirectory(
     int &$included,
     int &$skippedDev,
     int &$skippedAnnotation,
-    bool $applyFilter = true
+    bool $applyFilter = true,
+    bool $obfuscate = false
 ): void {
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($base, RecursiveDirectoryIterator::SKIP_DOTS)
@@ -91,8 +196,6 @@ function addDirectory(
             }
 
             // Check @lphenom-build annotation (reads PHP file header)
-            // shouldInclude() also checks isDevFile, but we already did that above,
-            // so this will only hit the annotation check path.
             if (!$filter->shouldInclude($filePath)) {
                 $skippedAnnotation++;
                 continue;
@@ -100,25 +203,37 @@ function addDirectory(
         }
 
         $localPath = $prefix . '/' . ltrim(str_replace($base, '', $filePath), '/');
-        $phar->addFile($filePath, $localPath);
+
+        // Apply eval-obfuscation to PHP files if enabled
+        if ($obfuscate && substr($filePath, -4) === '.php') {
+            $source = file_get_contents($filePath);
+            if ($source !== false) {
+                $phar->addFromString($localPath, obfuscatePhp($source));
+            } else {
+                $phar->addFile($filePath, $localPath);
+            }
+        } else {
+            $phar->addFile($filePath, $localPath);
+        }
+
         $included++;
     }
 }
 
-// Add source files (with annotation filtering)
+// Add source files (with annotation filtering + obfuscation)
 echo 'Adding src/ ...' . PHP_EOL;
-addDirectory($phar, $buildDir . '/src', 'src', $filter, $included, $skippedDev, $skippedAnnotation);
+addDirectory($phar, $buildDir . '/src', 'src', $filter, $included, $skippedDev, $skippedAnnotation, true, $obfuscateEnabled);
 
-// Add config (no filtering)
+// Add config (no filtering, no obfuscation)
 if (is_dir($buildDir . '/config')) {
     echo 'Adding config/ ...' . PHP_EOL;
-    addDirectory($phar, $buildDir . '/config', 'config', $filter, $included, $skippedDev, $skippedAnnotation, false);
+    addDirectory($phar, $buildDir . '/config', 'config', $filter, $included, $skippedDev, $skippedAnnotation, false, false);
 }
 
-// Add vendor/ (with dev-package + annotation filtering)
+// Add vendor/ (with dev-package + annotation filtering + obfuscation)
 if (is_dir($buildDir . '/vendor')) {
     echo 'Adding vendor/ (excluding dev packages + @lphenom-build filtering) ...' . PHP_EOL;
-    addDirectory($phar, $buildDir . '/vendor', 'vendor', $filter, $included, $skippedDev, $skippedAnnotation);
+    addDirectory($phar, $buildDir . '/vendor', 'vendor', $filter, $included, $skippedDev, $skippedAnnotation, true, $obfuscateEnabled);
 
     // Overwrite autoload_files.php with filtered version (exclude dev package entries).
     // Must happen AFTER addDirectory so it overwrites the original.
@@ -221,8 +336,13 @@ STUB;
 $phar->setStub($stub);
 $phar->stopBuffering();
 
-// Compress
-$phar->compressFiles(Phar::GZ);
+// Compress files inside PHAR with gzip (if ext-zlib available)
+if (extension_loaded('zlib')) {
+    $phar->compressFiles(Phar::GZ);
+    echo 'Compression: gzip' . PHP_EOL;
+} else {
+    echo 'Compression: none (ext-zlib not available)' . PHP_EOL;
+}
 
 $size  = number_format((int) filesize($pharFile));
 $count = count($phar);
