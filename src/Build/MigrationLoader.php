@@ -21,7 +21,7 @@ use LPhenom\Db\Migration\MigrationInterface;
  *   - implement LPhenom\Db\Migration\MigrationInterface
  *   - have a zero-argument constructor
  *
- * @lphenom-build none
+ * @lphenom-build shared
  */
 final class MigrationLoader
 {
